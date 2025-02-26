@@ -1,3 +1,4 @@
+import os
 import gpxpy
 import gpxpy.gpx
 import numpy as np
@@ -36,8 +37,11 @@ def bike_energy_model(cyclist_power, cyclist_mass, rolling_resistance, aerodynam
     avg_speed = distance / time if time > 0 else 0
     return energy, time, distance, avg_speed
 
+FILE_DIR = "/Users/alex/Documents/KTH/A\u030Ar3//Users/alex/Documents/KTH/År3/KEX/Git-Res/bachelor-thesis-vehicle-engineering/src/src/python/v.1-Translation_from_matlab"
+FILE_NAME = "Sockenplan_Huddinge_MinaKartaLantmateri.gpx"
+FILE_PATH = os.path.join(FILE_DIR, FILE_NAME)
 
-def load_map_data(filename="Sockenplan_Huddinge_MinaKartaLantmateri.gpx"):
+def load_map_data(FILE_PATH):
     """
     Parses a GPX file and extracts distance, elevation, angle, and rolling resistance data.
 
@@ -45,7 +49,7 @@ def load_map_data(filename="Sockenplan_Huddinge_MinaKartaLantmateri.gpx"):
     :return: Lists of step distances, elevations, angles, and rolling resistance coefficients
     """
     try:
-        with open(filename, "r") as gpx_file:
+        with open(FILE_PATH, "r") as gpx_file:
             gpx = gpxpy.parse(gpx_file)
 
         step_distances = []
