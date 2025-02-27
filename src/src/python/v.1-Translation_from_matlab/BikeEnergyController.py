@@ -1,8 +1,14 @@
+import os
 import numpy as np
 from BikeEnergyModel import bike_energy_model
 
-# ✅ Update the path to your GPX file
-GPX_FILE_PATH = "/Users/alex/Documents/KTH/År3/KEX/Git-Res/bachelor-thesis-vehicle-engineering/src/src/python/v.1-Translation_from_matlab/Sockenplan_Huddinge_MinaKartaLantmateri.gpx"
+# Dynamisk sökväg till GPX-filer i "data/raw/"
+REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../"))
+DATA_DIR = os.path.join(REPO_ROOT, "data/data/raw")
+
+# Enkel filhantering: Byt endast filnamnet här!
+GPX_FILE_NAME = "Sockenplan_Huddinge_MinaKartaLantmateri.gpx"
+GPX_FILE_PATH = os.path.join(DATA_DIR, GPX_FILE_NAME)
 
 def bike_energy_controller():
     percentiles = np.linspace(0.1, 0.9, 9)
@@ -24,6 +30,7 @@ def bike_energy_controller():
     return results_women, results_men
 
 if __name__ == "__main__":
+    print(f"Using GPX file: {GPX_FILE_PATH}")
     results_women, results_men = bike_energy_controller()
     print("Women:", results_women)
     print("Men:", results_men)

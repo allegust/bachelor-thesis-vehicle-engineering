@@ -5,6 +5,7 @@ import numpy as np
 from geopy.distance import geodesic
 
 def bike_energy_model(cyclist_power, cyclist_mass, rolling_resistance, aerodynamics, FILE_PATH):
+    print(f"📂 Loading GPX data from: {FILE_PATH}")
     g = 9.81  # Gravity
     R_earth = 6371 * 10**3  # Earth radius [m]
     temp = 20  # Temperature in Celsius
@@ -15,8 +16,11 @@ def bike_energy_model(cyclist_power, cyclist_mass, rolling_resistance, aerodynam
     ax_dec_adapt = -0.3  # Speed adaptation deceleration [m/s²]
     ax_dec_lat_acc = -1.5  # Lateral acceleration deceleration [m/s²]
     
-    # ✅ FIX: Now passing FILE_PATH to load_map_data()
+    # FIX: Now passing FILE_PATH to load_map_data()
     step_distances, step_elevations, step_angles, step_rr_coefs = load_map_data(FILE_PATH)
+    if not step_distances:
+        print("Error: No GPX data loaded. Check file path.")
+        return None, None, None, None
     
     m = cyclist_mass + 18.3  # Total mass including bicycle and luggage
     P = cyclist_power - 5  # Adjusted power due to drivetrain losses
