@@ -1,6 +1,9 @@
 import numpy as np
 from BikeEnergyModel import bike_energy_model
 
+# ✅ Update the path to your GPX file
+GPX_FILE_PATH = "/Users/alex/Documents/KTH/År3/KEX/Git-Res/bachelor-thesis-vehicle-engineering/src/src/python/v.1-Translation_from_matlab/Sockenplan_Huddinge_MinaKartaLantmateri.gpx"
+
 def bike_energy_controller():
     percentiles = np.linspace(0.1, 0.9, 9)
     power_factor = 71.8  # Conversion factor [W/(l/min VO2)]
@@ -14,8 +17,9 @@ def bike_energy_controller():
     power_women = (vo2max_women * power_factor / 1000) * weight_women
     power_men = (vo2max_men * power_factor / 1000) * weight_men
 
-    results_women = [bike_energy_model(p, weight_women, 0.007, 0.45) for p in power_women]
-    results_men = [bike_energy_model(p, weight_men, 0.007, 0.45) for p in power_men]
+    # ✅ FIX: Pass GPX file path to `bike_energy_model()`
+    results_women = [bike_energy_model(p, weight_women, 0.007, 0.45, GPX_FILE_PATH) for p in power_women]
+    results_men = [bike_energy_model(p, weight_men, 0.007, 0.45, GPX_FILE_PATH) for p in power_men]
 
     return results_women, results_men
 

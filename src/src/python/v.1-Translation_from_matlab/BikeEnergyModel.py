@@ -4,7 +4,7 @@ import gpxpy.gpx
 import numpy as np
 from geopy.distance import geodesic
 
-def bike_energy_model(cyclist_power, cyclist_mass, rolling_resistance, aerodynamics):
+def bike_energy_model(cyclist_power, cyclist_mass, rolling_resistance, aerodynamics, FILE_PATH):
     g = 9.81  # Gravity
     R_earth = 6371 * 10**3  # Earth radius [m]
     temp = 20  # Temperature in Celsius
@@ -15,8 +15,8 @@ def bike_energy_model(cyclist_power, cyclist_mass, rolling_resistance, aerodynam
     ax_dec_adapt = -0.3  # Speed adaptation deceleration [m/s²]
     ax_dec_lat_acc = -1.5  # Lateral acceleration deceleration [m/s²]
     
-    # Load map data (to be implemented separately)
-    step_distances, step_elevations, step_angles, step_rr_coefs = load_map_data()
+    # ✅ FIX: Now passing FILE_PATH to load_map_data()
+    step_distances, step_elevations, step_angles, step_rr_coefs = load_map_data(FILE_PATH)
     
     m = cyclist_mass + 18.3  # Total mass including bicycle and luggage
     P = cyclist_power - 5  # Adjusted power due to drivetrain losses
@@ -26,26 +26,33 @@ def bike_energy_model(cyclist_power, cyclist_mass, rolling_resistance, aerodynam
     vx = 5  # Initial speed [m/s]
     
     for step_dist, step_angle, step_rr in zip(step_distances, step_angles, step_rr_coefs):
-        dist_steps = int(round(step_dist / 0.01))  # Divide distance into 1cm steps
+        dist_steps = int(round(step_dist / 0.01))  # Dela upp sträckan i 1 cm steg
         for _ in range(dist_steps):
             ax = ax_dec_adapt if step_angle > 0 else ax_dec_lat_acc
-            vx = max(0, np.sqrt(vx**2 + 2 * ax * 0.01))
+
+            # Beräkna uppdaterad hastighet och förhindra negativa värden
+            vx_update = vx**2 + 2 * ax * 0.01
+
+            if vx_update < 0:
+                vx = 0  # Stoppa cykeln om beräkningen skulle leda till imaginära tal
+            else:
+                vx = max(0, np.sqrt(vx_update))  # Säkerställ att vx aldrig blir negativ eller NaN
+
+            # Undvik division med 0 genom att använda max(vx, 0.01)
             energy += P * 0.01 / max(vx, 0.01)
             time += 0.01 / max(vx, 0.01)
             distance += 0.01
-    
+
+    # Beräkna medelhastighet, förhindra division med 0
     avg_speed = distance / time if time > 0 else 0
     return energy, time, distance, avg_speed
 
-FILE_DIR = "/Users/alex/Documents/KTH/A\u030Ar3//Users/alex/Documents/KTH/År3/KEX/Git-Res/bachelor-thesis-vehicle-engineering/src/src/python/v.1-Translation_from_matlab"
-FILE_NAME = "Sockenplan_Huddinge_MinaKartaLantmateri.gpx"
-FILE_PATH = os.path.join(FILE_DIR, FILE_NAME)
 
 def load_map_data(FILE_PATH):
     """
     Parses a GPX file and extracts distance, elevation, angle, and rolling resistance data.
 
-    :param filename: Path to the GPX file
+    :param FILE_PATH: Path to the GPX file
     :return: Lists of step distances, elevations, angles, and rolling resistance coefficients
     """
     try:
@@ -87,8 +94,3 @@ def load_map_data(FILE_PATH):
     except Exception as e:
         print(f"Error reading GPX file: {e}")
         return [], [], [], []
-
-
-#def load_map_data():
-    # Placeholder for actual map data loading
-    return [100, 200, 300], [0, 5, -3], [0.01, 0.02, -0.015], [0.005, 0.006, 0.007]
