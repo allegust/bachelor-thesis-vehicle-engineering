@@ -5,7 +5,7 @@ from BikeEnergyModel import bike_energy_model
 
 
 
-# 🔍 Dynamisk sökväg till GPX-filer baserat på repository-root
+# Dynamisk sökväg till GPX-filer baserat på repository-root
 
 def find_repo_root():
     current_dir = os.path.abspath(os.path.dirname(__file__))
@@ -16,20 +16,20 @@ def find_repo_root():
 # Automatiskt hitta repository-roten
 REPO_ROOT = find_repo_root()
 if REPO_ROOT is None:
-    print("❌ ERROR: Could not determine repository root. Make sure you're inside the repo.")
+    print("ERROR: Could not determine repository root. Make sure you're inside the repo.")
     exit(1)
 
 # Dynamisk sökväg till data/raw/ oavsett vem som kör koden
 DATA_DIR = os.path.join(REPO_ROOT, "data/data/raw")
 
-# 📝 Byt GPX-fil enkelt genom att ändra denna variabel
+# Byt GPX-fil enkelt genom att ändra denna variabel
 GPX_FILE_NAME = "Sockenplan_Huddinge_MinaKartaLantmateri.gpx"
 GPX_FILE_PATH = os.path.join(DATA_DIR, GPX_FILE_NAME)
 
 # 🛠 Kontrollera att GPX-filen finns
 if not os.path.exists(GPX_FILE_PATH):
-    print(f"❌ ERROR: GPX file not found at {GPX_FILE_PATH}")
-    print(f"🔍 Check that the file is in the correct location: {DATA_DIR}")
+    print(f"ERROR: GPX file not found at {GPX_FILE_PATH}")
+    print(f"Check that the file is in the correct location: {DATA_DIR}")
     exit(1)
 
 
