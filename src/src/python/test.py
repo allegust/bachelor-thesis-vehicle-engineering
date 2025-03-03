@@ -1,2 +1,5 @@
-print("Hello, Bachelor Thesis!")
-print("This is a test suck")
+import scipy
+from scipy.stats import norm
+
+print("scipy version:", scipy.__version__)
+print("norm:", norm)

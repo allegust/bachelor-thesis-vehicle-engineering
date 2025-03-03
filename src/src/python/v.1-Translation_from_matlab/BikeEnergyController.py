@@ -23,7 +23,7 @@ if REPO_ROOT is None:
 DATA_DIR = os.path.join(REPO_ROOT, "data/data/raw")
 
 # Byt GPX-fil enkelt genom att ändra denna variabel
-GPX_FILE_NAME = "Sockenplan_Huddinge_MinaKartaLantmateri.gpx"
+GPX_FILE_NAME = "GraphHopper_Track_DD_Koenigsbruecker_up.gpx"
 GPX_FILE_PATH = os.path.join(DATA_DIR, GPX_FILE_NAME)
 
 # 🛠 Kontrollera att GPX-filen finns

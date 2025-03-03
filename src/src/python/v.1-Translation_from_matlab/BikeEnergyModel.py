@@ -6,48 +6,57 @@ from geopy.distance import geodesic
 
 def bike_energy_model(cyclist_power, cyclist_mass, rolling_resistance, aerodynamics, FILE_PATH):
     print(f"📂 Loading GPX data from: {FILE_PATH}")
-    g = 9.81  # Gravity
-    R_earth = 6371 * 10**3  # Earth radius [m]
+    
+    # Constants
+    g = 9.81  # Gravity [m/s²]
     temp = 20  # Temperature in Celsius
-    rho = 10**(-5) * temp**2 - 0.0048 * temp + 1.2926  # Air density
+    rho = 10**(-5) * temp**2 - 0.0048 * temp + 1.2926  # Air density [kg/m³]
+
+    # Rolling resistance coefficient (default asphalt)
+    C_r = rolling_resistance
 
     V_max = 10.5  # Maximum speed [m/s]
-    Ay_max = 2  # Maximum lateral acceleration [m/s²]
     ax_dec_adapt = -0.3  # Speed adaptation deceleration [m/s²]
-    ax_dec_lat_acc = -1.5  # Lateral acceleration deceleration [m/s²]
-    
-    # FIX: Now passing FILE_PATH to load_map_data()
+
+    # Load GPX data
     step_distances, step_elevations, step_angles, step_rr_coefs = load_map_data(FILE_PATH)
     if not step_distances:
         print("Error: No GPX data loaded. Check file path.")
         return None, None, None, None
-    
-    m = cyclist_mass + 18.3  # Total mass including bicycle and luggage
-    P = cyclist_power - 5  # Adjusted power due to drivetrain losses
-    P_up = cyclist_power * 1.5 - 5  # Increased power for uphill riding
 
+    # Cyclist parameters
+    m = cyclist_mass + 18.3  # Total mass (cyclist + bike + luggage) [kg]
+    P = cyclist_power - 5  # Adjusted power due to drivetrain losses
+
+    # Initialize variables
     energy, time, distance = 0, 0, 0
     vx = 5  # Initial speed [m/s]
-    
+
     for step_dist, step_angle, step_rr in zip(step_distances, step_angles, step_rr_coefs):
-        dist_steps = int(round(step_dist / 0.01))  # Dela upp sträckan i 1 cm steg
+        dist_steps = max(1, int(round(step_dist / 0.01)))  # Prevent zero steps
+        
         for _ in range(dist_steps):
-            ax = ax_dec_adapt if step_angle > 0 else ax_dec_lat_acc
+            # Compute forces acting on the cyclist
+            F_gravity = m * g * np.sin(step_angle)
+            F_roll = step_rr * m * g * np.cos(step_angle)
+            F_aero = 0.5 * rho * aerodynamics * vx**2
 
-            # Beräkna uppdaterad hastighet och förhindra negativa värden
-            vx_update = vx**2 + 2 * ax * 0.01
+            # Compute total resistance
+            F_total = F_gravity + F_roll + F_aero
 
-            if vx_update < 0:
-                vx = 0  # Stoppa cykeln om beräkningen skulle leda till imaginära tal
-            else:
-                vx = max(0, np.sqrt(vx_update))  # Säkerställ att vx aldrig blir negativ eller NaN
+            # Compute acceleration (Newton’s second law)
+            ax = (P / max(vx, 0.1)) - (F_total / m)
 
-            # Undvik division med 0 genom att använda max(vx, 0.01)
-            energy += P * 0.01 / max(vx, 0.01)
-            time += 0.01 / max(vx, 0.01)
+            # Update velocity
+            new_vx_squared = vx**2 + 2 * ax * 0.01
+            vx = max(0.01, np.sqrt(new_vx_squared)) if new_vx_squared > 0 else 0.01
+
+            # Compute energy and time updates
+            energy += P * 0.01 / max(vx, 0.1)  # Avoid zero division
+            time += 0.01 / max(vx, 0.1)
             distance += 0.01
 
-    # Beräkna medelhastighet, förhindra division med 0
+    # Compute average speed
     avg_speed = distance / time if time > 0 else 0
     return energy, time, distance, avg_speed
 
@@ -80,6 +89,9 @@ def load_map_data(FILE_PATH):
                         step_distance = geodesic(
                             (prev_point.latitude, prev_point.longitude), (lat, lon)
                         ).meters
+
+                        # Ensure step distance is valid
+                        step_distance = max(step_distance, 0.01)
 
                         # Compute elevation change and slope angle
                         elevation_change = elevation - prev_point.elevation
