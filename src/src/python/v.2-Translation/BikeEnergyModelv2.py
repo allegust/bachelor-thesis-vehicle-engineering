@@ -51,7 +51,6 @@ def MapData(map_file_path, FigStatus, RRcoef_input, Ay_max, temp):
             StepRRcoef, ReduceSpeedDist, V_max_LatAcc, V_max_XRoads)
 
 
-
 def SpeedReductionCausedByHighLatAcc(vx, ax_Dec_LatAcc, V_max_LatAcc_individ,
                                      Dist, Steps, StepDist, ll, i):
     """

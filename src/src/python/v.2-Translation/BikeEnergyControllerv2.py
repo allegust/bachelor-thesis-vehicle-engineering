@@ -18,7 +18,7 @@ if REPO_ROOT is None:
     exit(1)
 
 DATA_DIR = os.path.join(REPO_ROOT, "data", "data", "raw")
-GPX_FILE_NAME = "GraphHopper_Track_DD_Koenigsbruecker_up.gpx"
+GPX_FILE_NAME = "MapData_NewLocation.gpx"
 GPX_FILE_PATH = os.path.join(DATA_DIR, GPX_FILE_NAME)
 
 if not os.path.exists(GPX_FILE_PATH):
@@ -27,7 +27,8 @@ if not os.path.exists(GPX_FILE_PATH):
     exit(1)
 
 # 2) import the updated BikeEnergyModel
-from BikeEnergyModelv2 import BikeEnergyModel
+from BikeEnergyOptimized import BikeEnergyModel
+#BikeEnergyModelv3 
 
 def wblinv(percentiles, lambda_, k):
     """
@@ -71,9 +72,9 @@ def NormalDistributionWeight(MeanIn, Quantile25, Quantile75):
 # from BikeEnergyModel import BikeEnergyModel
 #
 # Otherwise, define it inline or rename the call below:
-def BikeEnergyModel_20241120(CyclistPowerIn, CyclistMassIn, CrIn, cwxA):
+def EnergyModel(CyclistPowerIn, CyclistMassIn, CrIn, cwxA):
     """
-    If in your original second script you used BikeEnergyModel_20241120(...),
+    If in your original second script you used EnergyModel(...),
     we simply forward to BikeEnergyModel(...).
     BUT now we also pass GPX_FILE_PATH so it uses the correct file.
     """
@@ -105,7 +106,7 @@ def combinations(CyclistPowerIn, CyclistMassIn, CrIn, cwxA_In):
     return np.array(all_combos)
 
 
-def BikeEnergyController():
+def EnergyController():
     """
     Translated from the Matlab script:
     function [Energy_women,Time_women,Distance_women,AvgSpeed_women,
@@ -189,7 +190,7 @@ def BikeEnergyController():
         for row in CombinedInput:
             # row = (p_in, m_in, cr_in, cwx_in)
             # pass it to the model
-            E, T, D, V = BikeEnergyModel_20241120(row[0], row[1], row[2], row[3])
+            E, T, D, V = EnergyModel(row[0], row[1], row[2], row[3])
             E_array.append(E)
             T_array.append(T)
             D_array.append(D)
@@ -239,9 +240,9 @@ def BikeEnergyController():
 
 
 if __name__ == "__main__":
-    BikeEnergyController()
+    EnergyController()
 # --------------- Example usage ---------------
 #if __name__ == "__main__":
-#    (Ew,Tw,Dw,Aw, Em,Tm,Dm,Am) = BikeEnergyController()
+#    (Ew,Tw,Dw,Aw, Em,Tm,Dm,Am) = EnergyController()
 #    # Do something with these results
 #    pass
