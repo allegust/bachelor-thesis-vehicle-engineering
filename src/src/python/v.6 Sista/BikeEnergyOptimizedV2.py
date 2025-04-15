@@ -167,7 +167,7 @@ def simulate_energy(StepDist, StepAngle, StepRRcoef,
     total_cm = 0  # total steps in cm to measure final distance
 
     for i in range(Steps):
-        step_size = 0.1  # new step size: 10 cm
+        step_size = 0.5  # new step size: 10 cm
         # # of 1cm increments for step i
         Dist_cm = int(round(StepDist[i] / step_size))                                     #0.01 ska vara
         total_cm += Dist_cm
