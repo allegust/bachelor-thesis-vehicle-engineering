@@ -257,7 +257,7 @@ def BikeEnergyModel(CyclistPowerIn, CyclistMassIn, CrIn, cwxA, map_file_path):
     # Precompute free-rolling slopes using the first segment's rolling resistance as a proxy
     alpha_Vector, vx_Vector = FreeRollingSlope(m, StepRRcoef[0], cwxA, rho)
     try:
-        idx_vmax = vx_Vector.index(V_max)
+        idx_vmax = np.argmin(np.abs(np.array(vx_Vector) - V_max))
         Alpha_Vmax_steadystate = alpha_Vector[idx_vmax]
     except ValueError:
         print(f"Warning: V_max={V_max} not found in vx_Vector. Using alpha=0.0")

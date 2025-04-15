@@ -1,4 +1,4 @@
-#BikeEnergyControllerv2.py
+# BikeEnergyControllerv5.py
 import os
 import math
 import numpy as np
@@ -6,7 +6,6 @@ import scipy
 from scipy.stats import norm
 import matplotlib.pyplot as plt
 
-# 1) find_repo_root code
 def find_repo_root():
     current_dir = os.path.abspath(os.path.dirname(__file__))
     while current_dir != "/" and not os.path.exists(os.path.join(current_dir, ".git")):
@@ -19,7 +18,7 @@ if REPO_ROOT is None:
     exit(1)
 
 DATA_DIR = os.path.join(REPO_ROOT, "data", "data", "raw")
-GPX_FILE_NAME = "MapData_NewLocation.gpx"
+GPX_FILE_NAME = "GraphHopper_Track_DD_Koenigsbruecker_up.gpx"
 GPX_FILE_PATH = os.path.join(DATA_DIR, GPX_FILE_NAME)
 
 if not os.path.exists(GPX_FILE_PATH):
@@ -28,16 +27,10 @@ if not os.path.exists(GPX_FILE_PATH):
     exit(1)
 
 # 2) import the updated BikeEnergyModel
-from BikeEnergyModelv2UPD import BikeEnergyModel
-
+from BikeEnergyOptimized import BikeEnergyModel
+# (Your script references "BikeEnergyModelv3" or "BikeEnergyOptimized";
 
 def wblinv(percentiles, lambda_, k):
-    """
-    Equivalent of Matlab wblinv(percentiles, lambda, k).
-    The Weibull inverse CDF:
-        x = lambda * (-ln(1 - p))^(1/k)
-    """
-    # handle array input
     arr = []
     for p in percentiles:
         val = lambda_ * (-math.log(1.0 - p))**(1.0/k)
@@ -45,19 +38,6 @@ def wblinv(percentiles, lambda_, k):
     return np.array(arr)
 
 def NormalDistributionWeight(MeanIn, Quantile25, Quantile75):
-    """
-    Equivalent of the Matlab subfunction in BikeEnergyController:
-    function [percentile_values] = NormalDistributionWeight(MeanIn,Quantile25,Quantile75)
-
-    We define an approach to norminv( p, mean, sigma ) ~ the inverse CDF of normal distribution.
-    In Python, we can use 'scipy.stats.norm.ppf' if allowed, but
-    to keep dependencies minimal, we do a manual approach or approximate. 
-    For brevity, let's do an approximate approach with ppf from scipy if available.
-    """
-
-    # replicate logic from Matlab:
-    # z25 = norminv(0.25, 0, 1)
-    # z75 = norminv(0.75, 0, 1)
     z25 = norm.ppf(0.25, loc=0, scale=1)
     z75 = norm.ppf(0.75, loc=0, scale=1)
     sigma = (Quantile75 - Quantile25)/(z75 - z25)
@@ -69,64 +49,41 @@ def NormalDistributionWeight(MeanIn, Quantile25, Quantile75):
         results.append(val)
     return results
 
-# If you keep BikeEnergyModel in a separate file, you can do:
-# from BikeEnergyModel import BikeEnergyModel
-#
-# Otherwise, define it inline or rename the call below:
 def EnergyModel(CyclistPowerIn, CyclistMassIn, CrIn, cwxA):
     """
-    If in your original second script you used EnergyModel(...),
-    we simply forward to BikeEnergyModel(...).
-    BUT now we also pass GPX_FILE_PATH so it uses the correct file.
+    A simple pass-through to BikeEnergyModel, 
+    including the path to the current GPX file.
     """
-    # Pass the GPX file path from the top of this file
-    return BikeEnergyModel(CyclistPowerIn, CyclistMassIn, CrIn, cwxA, map_file_path=GPX_FILE_PATH)
+    return BikeEnergyModel(
+        CyclistPowerIn,
+        CyclistMassIn,
+        CrIn,
+        cwxA,
+        map_file_path=GPX_FILE_PATH
+    )
 
 def combinations(CyclistPowerIn, CyclistMassIn, CrIn, cwxA_In):
-    """
-    Replacement for the Matlab 'combinations()' or code that does
-    'table2array(CombinedInput)'. 
-    In Matlab, you are enumerating all combinations of inputs across those deciles.
-
-    E.g.:
-    CombinedInput = all possible combos of
-        CyclistPowerIn[i], CyclistMassIn[j], CrIn[k], cwxA_In[l]
-
-    Then we store them in a structure. 
-    Below is a minimal example enumerating every combination.
-    """
     import itertools
-    # Each is presumably 1D arrays or lists
     all_combos = []
     for p in CyclistPowerIn:
         for m in CyclistMassIn:
             for cr in CrIn:
                 for cwx in cwxA_In:
-                    all_combos.append( (p, m, cr, cwx) )
-    # Return something akin to a Nx4 array:
+                    all_combos.append((p, m, cr, cwx))
     return np.array(all_combos)
-
 
 def EnergyController():
     """
-    Translated from the Matlab script:
-    function [Energy_women,Time_women,Distance_women,AvgSpeed_women,
-              Energy_men,Time_men,Distance_men,AvgSpeed_men] = BikeEnergyController()
+    Translated from the Matlab script BikeEnergyController but in Python form.
     """
-    Ctrl_Save = 1
-
-    # set(0,'defaulttextInterpreter','latex') # (Matlab only) => not used in Python
-
     # Calculation of Percentiles
-    percentiles = np.arange(0.1, 1.0, 0.1)  # 0.1:0.1:0.9
-
+    percentiles = np.arange(0.1, 1.0, 0.1)
 
     # VO2max for men/women
     VO2max_women = np.array([24.225, 27.6, 29.1, 30.975, 32.125, 33.625, 35.5, 37.8, 41.625])
     VO2max_men   = np.array([30.6,   33.2525,35.9125,37.8,   39.7,   41.55, 44.4875,46.525,49.125])
 
     PowerFactor = 71.8
-    # weight specific power
     WeightSpecificPower_women = VO2max_women * PowerFactor / 1000.0
     WeightSpecificPower_men   = VO2max_men   * PowerFactor / 1000.0
 
@@ -138,27 +95,25 @@ def EnergyController():
     Weight_25_men     = np.mean([69.5, 71.9, 73.8, 75.0, 75.8, 76.0, 76.2, 76.1])
     Weight_75_men     = np.mean([88.4, 91.6, 94.6, 96.8, 97.9, 98.3, 98.6, 98.7])
 
-    # compute distribution
     Weight_deciles_women = NormalDistributionWeight(Weight_mean_women, Weight_25_women, Weight_75_women)
     Weight_deciles_men   = NormalDistributionWeight(Weight_mean_men,   Weight_25_men,   Weight_75_men)
 
-    # now compute max power
     MaxPower_women = WeightSpecificPower_women * np.array(Weight_deciles_women)
     MaxPower_men   = WeightSpecificPower_men   * np.array(Weight_deciles_men)
 
-    # 65% of max
+    # typically 65% of max used in your script, but you have 0.3 => consistent with your code
     Power65_women = 0.3 * MaxPower_women
-    Power65_men   = 0.3 * MaxPower_men   # in your code it is 0.3, but text says 65% ???
+    Power65_men   = 0.3 * MaxPower_men
 
-    # input distribution for rolling resistance Cr => Weibull
+    # Rolling resistance from a Weibull distribution
     k = 2.28
     lambda_ = 0.00874
     CrIn = wblinv(percentiles, lambda_, k)
 
-    # cwxA
+    # cwxA array
     cwxA_In = np.array([0.356, 0.402, 0.452, 0.493, 0.542, 0.588, 0.633, 0.695, 0.823])
 
-    # We will store the output
+    # We'll store final results
     Energy_women = []
     Time_women = []
     Distance_women = []
@@ -169,8 +124,7 @@ def EnergyController():
     Distance_men = []
     AvgSpeed_men = []
 
-    # main loop
-    for s in [1, 2]:
+    for s in [1,2]:
         if s == 1:
             CyclistPowerIn = Power65_women
             CyclistMassIn  = Weight_deciles_women
@@ -178,33 +132,26 @@ def EnergyController():
             CyclistPowerIn = Power65_men
             CyclistMassIn  = Weight_deciles_men
 
-        # Build all combos
+        # build all combos
         CombinedInput = combinations(CyclistPowerIn, CyclistMassIn, CrIn, cwxA_In)
 
-        # prepare arrays to store results
         E_array = []
         T_array = []
         D_array = []
         V_array = []
 
-        ct = 1
         for row in CombinedInput:
-            # row = (p_in, m_in, cr_in, cwx_in)
-            # pass it to the model
             E, T, D, V = EnergyModel(row[0], row[1], row[2], row[3])
             E_array.append(E)
             T_array.append(T)
             D_array.append(D)
             V_array.append(V)
-            ct += 1
 
-        # sort them
         E_array_sorted = sorted(E_array)
         T_array_sorted = sorted(T_array)
         D_array_sorted = sorted(D_array)
         V_array_sorted = sorted(V_array)
 
-        # store into correct arrays
         if s == 1:
             Energy_women   = E_array_sorted
             Time_women     = T_array_sorted
@@ -216,8 +163,7 @@ def EnergyController():
             Distance_men = D_array_sorted
             AvgSpeed_men = V_array_sorted
 
-    # Print results in a similar format to Python
-    # Women
+    # Print results
     print('Women: [', end='')
     for i in range(len(Energy_women)):
         print(f"({Energy_women[i]:.10f}, {Time_women[i]:.10f}, "
@@ -241,26 +187,26 @@ def EnergyController():
 
 
 if __name__ == "__main__":
-    # Run the controller, retrieving results
-    (Ew, Tw, Dw, Aw,
-     Em, Tm, Dm, Am) = EnergyController()
+    # Run the main controller. This returns 8 arrays in total:
+    #    (Energy_women, Time_women, Distance_women, AvgSpeed_women,
+    #     Energy_men,   Time_men,   Distance_men,   AvgSpeed_men)
+    E_w, T_w, D_w, V_w, E_m, T_m, D_m, V_m = EnergyController()
 
-    # Aw, Am are sorted average speeds in m/s. Convert to km/h:
-    Aw_kmh = np.array(Aw)*3.6
-    Am_kmh = np.array(Am)*3.6
+    # Convert speeds from m/s to km/h, if desired:
+    speeds_w_kmh = [v*3.6 for v in V_w]
+    speeds_m_kmh = [v*3.6 for v in V_m]
 
-    # Build a cumulative fraction axis from 1/N to 1 for each group
-    cdf_women = np.linspace(1/len(Aw_kmh), 1, len(Aw_kmh))
-    cdf_men   = np.linspace(1/len(Am_kmh), 1, len(Am_kmh))
+    # Sort them so we can plot the distribution from slowest to fastest
+    speeds_w_kmh_sorted = sorted(speeds_w_kmh)
+    speeds_m_kmh_sorted = sorted(speeds_m_kmh)
 
-    # Plot
+    # Now let's make a simple plot of speed vs. percentile index
     plt.figure(figsize=(7,5))
-    plt.plot(Aw_kmh, cdf_women, label='Women')
-    plt.plot(Am_kmh, cdf_men,   label='Men')
-
-    plt.xlabel('Average speed [km/h]', fontsize=12)
-    plt.ylabel('Sorted population of cyclists [1]', fontsize=12)
+    plt.plot(speeds_w_kmh_sorted, label='Women')
+    plt.plot(speeds_m_kmh_sorted, label='Men')
+    plt.xlabel('Cyclist index (sorted)')
+    plt.ylabel('Average speed [km/h]')
+    plt.title('Distribution of Average Speeds over the Synthetic Population')
     plt.grid(True)
     plt.legend()
-    plt.tight_layout()
     plt.show()
