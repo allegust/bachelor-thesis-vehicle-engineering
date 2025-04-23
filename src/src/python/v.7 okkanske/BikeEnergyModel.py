@@ -169,9 +169,11 @@ def simulate_energy(StepDist, StepAngle, StepRRcoef,
     for i in range(Steps):
         step_size = 0.01  # new step size: 10 cm
         # # of 1cm increments for step i
-        Dist_cm = int(round(StepDist[i] / step_size))                                     #0.01 ska vara
+        Dist_cm = int(round(StepDist[i] / step_size))
+                # Limit to first 67.81 m like in MATLAB test
+        #if i == 0:
+        #    Dist_cm = int(round(67.81 / step_size))                                    #0.01 ska vara
         total_cm += Dist_cm
-
         # for MATLAB, we keep a local array v_x for each step if you want
         # but eventually we do e.g. v_x_total = [v_x_total, v_x].
         # We'll do it similarly:

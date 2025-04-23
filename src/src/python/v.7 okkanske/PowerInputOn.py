@@ -11,9 +11,11 @@ def Power_Input_On(m, StepRRcoef, StepAngle, vx, cwxA, rho, P, V_max):
     # Constants
     g = 9.81  # [m/s^2]
 
+
     # Power adaptation to uphill cycling
     # factor 1 at 0%
     # factor 1.5 at 10% (5.7 degree = 0.0997 rad) (flat out)
+    """
     P_origin = P
     P_new = P * 5 * StepAngle
     if P_new > 1.5 * P_origin:
@@ -21,7 +23,9 @@ def Power_Input_On(m, StepRRcoef, StepAngle, vx, cwxA, rho, P, V_max):
     elif P_new < P_origin:
         P_new = 1.5 * P_origin
     P = P_new
-
+    """
+    P = 1.5 * P
+    
     # Steady state power used
     P_roll_steady = m * g * StepRRcoef * math.cos(StepAngle) * vx
     P_air_steady = 0.5 * cwxA * rho * (vx ** 3)
