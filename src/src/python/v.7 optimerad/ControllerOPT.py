@@ -26,9 +26,11 @@ if not os.path.exists(GPX_FILE_PATH):
     exit(1)
 
 # Import the updated BikeEnergyModel from BikeEnergyOptimized.py
-from NUMBA_BikeEnergyModelOPT import BikeEnergyModel
+from BikeEnergyModelOPTv2 import BikeEnergyModel
     # NUMBA_BikeEnergyModelOPT
     # BikeEnergyModelOPT
+    # NUMBA_BikeEnergyModelOPTv2
+    # BikeEnergyModelOPTv2
 
 def wblinv(percentiles, lambda_, k):
     """

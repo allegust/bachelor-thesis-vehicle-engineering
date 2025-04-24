@@ -180,7 +180,7 @@ def simulate_energy(StepDist, StepAngle, StepRRcoef,
     total_cm = 0
 
     for i in range(Steps):
-        step_size = 0.01
+        step_size = 0.5
         Dist_cm = int(round(StepDist[i] / step_size))
         total_cm += Dist_cm
 
