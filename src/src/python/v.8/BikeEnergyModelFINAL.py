@@ -8,7 +8,6 @@ from pathlib import Path
 from typing import Tuple, Union, List
 
 import gpxpy
-Transformer.from_crs("EPSG:4326", "EPSG:32610", always_xy=True)
 import numpy as np
 from pyproj import Transformer
 
@@ -76,7 +75,8 @@ def map_data(
         return (empty,) * 7
 
     # Project lat/lon to planar coords (Web Mercator)
-    transformer = Transformer.from_crs("EPSG:4326", "EPSG:3857", always_xy=True)
+    #transformer = Transformer.from_crs("EPSG:4326", "EPSG:3857", always_xy=True)
+    transformer = Transformer.from_crs("EPSG:4326", "EPSG:32610", always_xy=True)   # Same as in MATLAB
     x, y = transformer.transform(lon, lat)
 
     # Haversine for 2D distances
@@ -90,17 +90,8 @@ def map_data(
     dist_2d = 6_371_000.0 * c
 
     delta_ele = ele[1:] - ele[:-1]
-    step_dist = np.hypot(dist_2d, delta_ele)
-
-    # Elevation smoothing (5-point)
-    if ele.size >= 5:
-        kernel = np.ones(5, dtype=np.float64) / 5.0
-        ele_smooth = np.convolve(ele, kernel, mode="same")
-        ele_smooth[:2] = ele[:2]; ele_smooth[-2:] = ele[-2:]
-    else:
-        ele_smooth = ele
-    delta_ele = ele_smooth[1:] - ele_smooth[:-1]
-    step_ele = ele_smooth[1:]
+    step_dist = dist_2d                  # horizontal distance only
+    step_ele  = ele[1:]                  # no elevation smoothing
 
     # Slope angle, clipped to ±0.2 rad -------------------------------------
     # Slope
@@ -177,7 +168,7 @@ def simulate_energy(
     v_max_xroads: np.ndarray,
     m: float,
     p_flat: float,
-    p_up: float,
+    #p_up: float,       # Not used in this version
     v_max: float,
     ax_dec_adapt: float,
     ax_dec_latacc: float,
@@ -254,7 +245,7 @@ def simulate_energy(
                     if vx > v_max:
                         ax_temp = ax_dec_adapt
                         p_in = p_roll = p_air = p_climb = p_acc = 0.0
-                    elif abs(vx - v_max) < 1e-09:
+                    elif vx == v_max:                       #elif abs(vx - v_max) < 1e-09:
                         # almost exactly at v_max – power off
                         p_in = 0.0
                         ax_temp = Power_Input_Off(
@@ -289,7 +280,7 @@ def simulate_energy(
                             p_climb,
                             p_acc,
                         ) = Power_Input_On(
-                            m, rr_coef, ang, vx, cwxA, rho, p_up, v_max
+                            m, rr_coef, ang, vx, cwxA, rho, p_flat, v_max
                         )
 
             # ---- kinematics & energy integration ----------------------------
@@ -365,7 +356,7 @@ def BikeEnergyModel(
 
     m = CyclistMassIn + 18.3  # rider + bike+luggage
     p_flat = CyclistPowerIn - 5.0
-    p_up = CyclistPowerIn * 1.5 - 5.0
+    p_up = CyclistPowerIn - 5.0          # p_up = CyclistPowerIn * 1.5 - 5.0   Can be adjusted
 
     alpha_vec, vx_vec = Free_Rolling_Slope(m, step_rr[0], cwxA, rho)
     alpha_vmax_ss = alpha_vec[np.argmin(np.abs(np.asarray(vx_vec) - V_max))]
@@ -378,7 +369,7 @@ def BikeEnergyModel(
         v_max_xroads,
         m,
         p_flat,
-        p_up,
+        #p_up,       # Not used in this version
         V_max,
         ax_dec_adapt,
         ax_dec_latacc,

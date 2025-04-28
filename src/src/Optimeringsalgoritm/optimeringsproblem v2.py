@@ -9,7 +9,7 @@ from BikeEnergyOptimizedV2 import BikeEnergyModel   # lever‑1 engine
 # --------------------------- parameters -----------------------------------
 highway_width = 55        # [m]
 max_slope     = 0.05      # ±5 %
-start_height  = 1.0       # [m]
+start_height  = -2.0       # [m]
 end_height    = 2.0       # [m]
 
 LAT0, LON0 = 59.329, 18.068          # anchor for synthetic GPS (Stockholm)
@@ -64,7 +64,7 @@ coords_under_gps = as_gps(coords_under_xyz)
 
 # --------------------------- run energy model -----------------------------
 
-POWER = 150.0     # W
+POWER = 150.0     # W               # Kolla på att ev ha typ 9 representativa värden/individer
 MASS  = 70.0      # kg (rider)
 C_R   = 0.007
 CWXA  = 0.45

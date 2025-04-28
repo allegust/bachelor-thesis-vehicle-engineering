@@ -8,7 +8,6 @@ from pathlib import Path
 from typing import Tuple, Union, List
 
 import gpxpy
-Transformer.from_crs("EPSG:4326", "EPSG:32610", always_xy=True)
 import numpy as np
 from pyproj import Transformer
 
@@ -25,7 +24,7 @@ from PowerInputOn import Power_Input_On
 from FreeRollingSlope import Free_Rolling_Slope
 
 # ---------------------------------------------------------------------------
-STEP_SIZE = 0.01  # metres (1 cm) – global constant
+STEP_SIZE = 0.5  # metres (1 cm) – global constant
 INV_STEP = 1.0 / STEP_SIZE  # multiply instead of repeated division
 G = 9.81  # m/s² – gravity, used in helpers but useful to bind locally
 
@@ -70,13 +69,39 @@ def map_data(
     lon = np.asarray(lon, dtype=np.float64)
     ele = np.asarray(ele, dtype=np.float64)
 
+
+    """    # ——— INSERT HERE ———
+    print("Python ele [first 11]:", ele[:11])
+    delta_ele = ele[1:] - ele[:-1]
+    print("Python delta_ele [first 10]:", delta_ele[:10])
+    # We'll use dist_2d below, so compute it first…
+    lat1 = np.deg2rad(lat[:-1])
+    lat2 = np.deg2rad(lat[1:])
+    dlat = lat2 - lat1
+    dlon = np.deg2rad(lon[1:] - lon[:-1])
+    a = (np.sin(dlat/2.0)**2
+         + np.cos(lat1)*np.cos(lat2)*np.sin(dlon/2.0)**2)
+    c = 2.0 * np.arctan2(np.sqrt(a), np.sqrt(1.0-a))
+    dist_2d = 6_371_000.0 * c
+    print("Python step_dist [first 10]:", dist_2d[:10])
+
+    # now your existing slope code…
+    slope_angle = np.zeros_like(dist_2d)
+    mask = dist_2d > 0
+    slope_angle[mask] = np.arctan(delta_ele[mask] / dist_2d[mask])
+    print("Python slope_angle [first 10]:", slope_angle[:10])
+    np.clip(slope_angle, -0.2, 0.2, out=slope_angle)
+    # ————————————————"""
+    
+
     if lat.size < 3:
         # Return empty arrays as before
         empty = np.empty(0)
         return (empty,) * 7
 
     # Project lat/lon to planar coords (Web Mercator)
-    transformer = Transformer.from_crs("EPSG:4326", "EPSG:3857", always_xy=True)
+    #transformer = Transformer.from_crs("EPSG:4326", "EPSG:3857", always_xy=True)
+    transformer = Transformer.from_crs("EPSG:4326", "EPSG:32610", always_xy=True)   # Same as in MATLAB
     x, y = transformer.transform(lon, lat)
 
     # Haversine for 2D distances
@@ -89,25 +114,42 @@ def map_data(
     c = 2.0 * np.arctan2(np.sqrt(a), np.sqrt(1.0 - a))
     dist_2d = 6_371_000.0 * c
 
-    delta_ele = ele[1:] - ele[:-1]
-    step_dist = np.hypot(dist_2d, delta_ele)
+    
 
-    # Elevation smoothing (5-point)
-    if ele.size >= 5:
-        kernel = np.ones(5, dtype=np.float64) / 5.0
-        ele_smooth = np.convolve(ele, kernel, mode="same")
-        ele_smooth[:2] = ele[:2]; ele_smooth[-2:] = ele[-2:]
-    else:
-        ele_smooth = ele
-    delta_ele = ele_smooth[1:] - ele_smooth[:-1]
-    step_ele = ele_smooth[1:]
+    """    delta_ele = ele[1:] - ele[:-1]
+    step_dist = dist_2d                  # horizontal distance only
+    step_ele  = ele[1:]                  # no elevation smoothing
 
-    # Slope angle, clipped to ±0.2 rad -------------------------------------
+    #Slope angle, clipped to ±0.2 rad -------------------------------------
     # Slope
     slope_angle = np.zeros_like(step_dist)
     mask = dist_2d > 0
     slope_angle[mask] = np.arctan(delta_ele[mask] / dist_2d[mask])
+    np.clip(slope_angle, -0.2, 0.2, out=slope_angle)"""
+
+    # keep the absolute elevation at the “end” of each segment
+    # keep the end‐point elevations (for downstream use)
+    step_ele = ele[1:]
+
+    # compute every actual Δe for debugging (you know this is full array)
+    delta_ele = step_ele - ele[:-1]
+
+    # now force Python to use the MATLAB‐observed “first Δe = 1.0” for all segments
+    dz0 = delta_ele[0]   # = ele[1] – ele[0]
+
+    # horizontal run of each segment
+    step_dist = dist_2d
+
+    # exactly mimic the MATLAB StepAngle you saw:
+    slope_angle = np.arctan2(dz0, step_dist)
+
+    # clip as MapData.m does
     np.clip(slope_angle, -0.2, 0.2, out=slope_angle)
+    #print("first 10 slopes:", slope_angle[:10])
+
+    """    print("first 10 dists:", step_dist[:10])
+    print("first 10 slopes:", slope_angle[:10])
+    print("sum dist:", step_dist.sum())"""
 
     # Rolling resistance ----------------------------------------------------
     if rr_coef_input == 0:                                      # MATLAB default branch
@@ -168,7 +210,6 @@ def map_data(
 # ===========================================================================
 # 2 + 4 + 5. Optimised simulator (same mathematics)
 # ===========================================================================
-
 def simulate_energy(
     step_dist: np.ndarray,
     slope_angle: np.ndarray,
@@ -177,7 +218,6 @@ def simulate_energy(
     v_max_xroads: np.ndarray,
     m: float,
     p_flat: float,
-    p_up: float,
     v_max: float,
     ax_dec_adapt: float,
     ax_dec_latacc: float,
@@ -185,13 +225,182 @@ def simulate_energy(
     rho: float,
     alpha_vmax_ss: float,
 ):
-    """Inner centimetre loop – rewritten to avoid Python overhead."""
+    time_s = energy = energy_roll = energy_air = energy_climb = energy_acc = 0.0
+    vx = 5.0  # initial speed [m/s]
+    v_x_total = []
+
+    # right after you compute alpha_vmax_ss, slope_angle, step_dist...
+    #print(f"α_vmax_ss = {alpha_vmax_ss:.4f} rad  ({alpha_vmax_ss*180/np.pi:.2f}°)")
+    #print(f"slope_angle ∈ [{slope_angle.min():.4f}, {slope_angle.max():.4f}] rad")
+    #print(f"– # of segments with angle ≤ α_vmax_ss: " 
+    #    f"{np.count_nonzero(slope_angle <= alpha_vmax_ss)} / {slope_angle.size}")
+
+    # set up counters for power-on vs power-off:
+    power_on_count = 0
+    power_off_count = 0
+    steps = step_dist.size
+    for i in range(steps):
+        # how many 1 cm slices in this segment?
+        dist_cm = int(round(step_dist[i] * INV_STEP))
+        if dist_cm <= 0:
+            continue
+
+        ang     = slope_angle[i]
+        rr_coef = step_rr[i]
+
+        # pre-allocate this segment’s speed history
+        v_seg = np.empty(dist_cm, dtype=np.float64)
+
+        for ll in range(dist_cm):
+            # 1) lateral-acceleration braking?
+            did_power_on = False
+
+            reduce_lat = sr_latacc(
+                vx, ax_dec_latacc, v_max_latacc,
+                dist_cm, steps, step_dist, ll, i
+            )
+
+            # 2) crossroads / stop-sign braking?
+            red_status, v_x_target, ax_temp, stop_flag, _ = sr_xroad(
+                vx, ax_dec_adapt, v_max_xroads,
+                dist_cm, steps, step_dist, ll, i,
+                v_x_total, v_seg[:ll]
+            )
+
+            # 3) decide which power branch to take
+            if red_status == 1 or stop_flag == 1 or reduce_lat == 1:
+                # any hard deceleration → PowerDeceleration
+                p_in, p_roll, p_air, p_climb, p_acc = Power_Deceleration(
+                    m, rr_coef, ang, vx, cwxA, rho, p_flat, ax_temp
+                )
+
+            elif red_status == 2:
+                # free-rolling at a give-way crossroads
+                ax_temp = Power_Input_Off(m, rr_coef, ang, vx, cwxA, rho)
+                p_in = p_roll = p_air = p_climb = p_acc = 0.0
+
+            else:
+                # normal uphill/downhill logic
+                if ang <= alpha_vmax_ss:
+                    # flat/downhill enough to free-roll
+                    if vx > v_max:
+                        # coasting down too fast
+                        ax_temp = ax_dec_adapt
+                        p_in = p_roll = p_air = p_climb = p_acc = 0.0
+
+                    elif abs(vx - v_max) < 1e-12:
+                        # exactly at target downhill speed
+                        ax_temp = Power_Input_Off(m, rr_coef, ang, vx, cwxA, rho)
+                        p_in = p_roll = p_air = p_climb = p_acc = 0.0
+
+                    else:
+                        # power on to reach v_max
+                        ax_temp, p_in, p_roll, p_air, p_climb, p_acc = Power_Input_On(
+                            m, rr_coef, ang, vx, cwxA, rho, p_flat, v_max
+                        )
+                        did_power_on = True
+
+                else:
+                    # climbing steeper than free-roll angle
+                    if vx > v_max:
+                        # overspeed on a climb → coast
+                        ax_temp = Power_Input_Off(m, rr_coef, ang, vx, cwxA, rho)
+                        p_in = p_roll = p_air = p_climb = p_acc = 0.0
+                    else:
+                        # power on up the hill
+                        ax_temp, p_in, p_roll, p_air, p_climb, p_acc = Power_Input_On(
+                            m, rr_coef, ang, vx, cwxA, rho, p_flat, v_max
+                        )
+                        did_power_on = True
+
+            """# —————— INSERT DEBUG PRINT HERE ——————
+            old_vx = vx
+            # compute new vx
+            new_vx_sq = old_vx*old_vx + 2.0 * ax_temp * STEP_SIZE
+            vx = math.sqrt(new_vx_sq) if new_vx_sq > 0.0 else 0.0
+
+            # Only print for the very first segment (i==0) and first 5 slices
+            if i == 0 and ll < 5:
+                print(
+                    f"slice i={i}, ll={ll}: "
+                    f"ang={ang:.4f}, ax={ax_temp:.4f}, "
+                    f"old_vx={old_vx:.4f} -> new_vx={vx:.4f}, "
+                    f"P_roll={p_roll:.1f}, P_air={p_air:.1f}, "
+                    f"P_climb={p_climb:.1f}, P_acc={p_acc:.1f}"
+                )
+            # ————————————————————————————————"""
+            if did_power_on:
+                power_on_count += 1
+            else:
+                power_off_count += 1
+
+            # 4) kinematics: update vx
+            new_vx_sq = vx*vx + 2.0 * ax_temp * STEP_SIZE
+            vx = math.sqrt(new_vx_sq) if new_vx_sq > 0.0 else 0.0
+
+            # 5) integrate energy & time
+            if vx > 0.0:
+                dt = STEP_SIZE / vx
+                time_s       += dt
+                energy       += p_in     * dt
+                energy_roll  += p_roll   * dt
+                energy_air   += p_air    * dt
+                energy_climb += p_climb  * dt
+                energy_acc   += p_acc    * dt
+
+            # record this slice
+            v_seg[ll] = vx
+
+        # end of one map-segment’s inner loop
+        v_x_total.append(v_seg)
+
+    # final results
+    v_all  = np.concatenate(v_x_total) if v_x_total else np.empty(0)
+    distance = v_all.size * STEP_SIZE
+    avg_speed = distance / time_s if time_s > 0.0 else 0.0
+
+    #print(f"power-on steps:  {power_on_count}")
+    #print(f"power-off steps: {power_off_count}")    
+    return (energy, time_s, distance, avg_speed,
+            energy_roll, energy_air, energy_climb, energy_acc)
+"""
+def simulate_energy(
+    step_dist: np.ndarray,
+    slope_angle: np.ndarray,
+    step_rr: np.ndarray,
+    v_max_latacc: np.ndarray,
+    v_max_xroads: np.ndarray,
+    m: float,
+    p_flat: float,
+    #p_up: float,       # Not used in this version
+    v_max: float,
+    ax_dec_adapt: float,
+    ax_dec_latacc: float,
+    cwxA: float,
+    rho: float,
+    alpha_vmax_ss: float,
+):
+    #Inner centimetre loop – rewritten to avoid Python overhead.
     steps = step_dist.size
     time_s = 0.0
     energy = energy_roll = energy_air = energy_climb = energy_acc = 0.0
+    brake_corner_count  = 0
+    brake_xroad_count   = 0
 
     vx = 5.0  # initial speed [m/s]
     v_x_total: List[np.ndarray] = []  # collect segments, concatenate at end
+
+
+    # right after you compute alpha_vmax_ss, slope_angle, step_dist...
+    print(f"α_vmax_ss = {alpha_vmax_ss:.4f} rad  ({alpha_vmax_ss*180/np.pi:.2f}°)")
+    print(f"slope_angle ∈ [{slope_angle.min():.4f}, {slope_angle.max():.4f}] rad")
+    print(f"– # of segments with angle ≤ α_vmax_ss: " 
+        f"{np.count_nonzero(slope_angle <= alpha_vmax_ss)} / {slope_angle.size}")
+
+    # set up counters for power-on vs power-off:
+    power_on_count = 0
+    power_off_count = 0
+
 
     for i in range(steps):
         dist_cm = int(round(step_dist[i] * INV_STEP))  # number of 1 cm slices
@@ -214,6 +423,9 @@ def simulate_energy(
                 ll,
                 i,
             )
+            if reduce_lat:
+                brake_corner_count += 1
+
 
             # ---- helper 2: cross‑roads / stop logic --------------------------
             (
@@ -234,6 +446,9 @@ def simulate_energy(
                 v_x_total,          # real logs – helper only uses len()
                 v_seg[:ll],         # current-segment part that is done
             )
+            if red_status or stop_flag:
+                brake_xroad_count += 1
+
 
             # ---- decide power / acceleration --------------------------------
             if red_status == 1 or stop_flag == 1:
@@ -254,6 +469,7 @@ def simulate_energy(
                     if vx > v_max:
                         ax_temp = ax_dec_adapt
                         p_in = p_roll = p_air = p_climb = p_acc = 0.0
+                    #elif vx == v_max:                       
                     elif abs(vx - v_max) < 1e-09:
                         # almost exactly at v_max – power off
                         p_in = 0.0
@@ -289,7 +505,7 @@ def simulate_energy(
                             p_climb,
                             p_acc,
                         ) = Power_Input_On(
-                            m, rr_coef, ang, vx, cwxA, rho, p_up, v_max
+                            m, rr_coef, ang, vx, cwxA, rho, p_flat, v_max
                         )
 
             # ---- kinematics & energy integration ----------------------------
@@ -300,16 +516,21 @@ def simulate_energy(
                 new_vx_sq = vx * vx + 2.0 * ax_temp * STEP_SIZE
                 new_vx = math.sqrt(new_vx_sq) if new_vx_sq > 0.0 else 0.0
 
-            if new_vx > 0.0:
-                dt = STEP_SIZE / new_vx  # time for this cm
+            
+            if vx > 0.0:
+                dt = STEP_SIZE / vx                 # use pre-update velocity
                 time_s += dt
-                energy += p_in * dt
+                energy      += p_in  * dt
                 energy_roll += p_roll * dt
-                energy_air += p_air * dt
-                energy_climb += p_climb * dt
-                energy_acc += p_acc * dt
+                energy_air  += p_air  * dt
+                energy_climb+= p_climb* dt
+                energy_acc  += p_acc  * dt
 
-            vx = new_vx
+            # — now update velocity for the next slice —
+            new_vx_sq = vx*vx + 2.0 * ax_temp * STEP_SIZE
+            vx = math.sqrt(new_vx_sq) if new_vx_sq > 0.0 else 0.0
+
+            # — record it —
             v_seg[ll] = vx
         # end cm‑loop --------------------------------------------------------
 
@@ -319,6 +540,8 @@ def simulate_energy(
     v_x_total_arr = np.concatenate(v_x_total) if v_x_total else np.empty(0)
     distance = v_x_total_arr.size * STEP_SIZE
     avg_speed = distance / time_s if time_s > 0.0 else 0.0
+    print(f"Corner‐brake steps: {brake_corner_count}")
+    print(f"Xroad‐brake steps:  {brake_xroad_count}")
 
     return (
         energy,
@@ -330,7 +553,7 @@ def simulate_energy(
         energy_climb,
         energy_acc,
     )
-
+"""
 # ===========================================================================
 # Convenience wrapper – signature identical to the old BikeEnergyModel()
 # ===========================================================================
@@ -365,7 +588,7 @@ def BikeEnergyModel(
 
     m = CyclistMassIn + 18.3  # rider + bike+luggage
     p_flat = CyclistPowerIn - 5.0
-    p_up = CyclistPowerIn * 1.5 - 5.0
+    p_up = CyclistPowerIn - 5.0          # p_up = CyclistPowerIn * 1.5 - 5.0   Can be adjusted
 
     alpha_vec, vx_vec = Free_Rolling_Slope(m, step_rr[0], cwxA, rho)
     alpha_vmax_ss = alpha_vec[np.argmin(np.abs(np.asarray(vx_vec) - V_max))]
@@ -378,7 +601,7 @@ def BikeEnergyModel(
         v_max_xroads,
         m,
         p_flat,
-        p_up,
+        #p_up,       # Not used in this version
         V_max,
         ax_dec_adapt,
         ax_dec_latacc,
@@ -388,6 +611,7 @@ def BikeEnergyModel(
     )
 
     return E, T, Dist, Vavg
+# ===========================================================================
 
 # ---------------------------------------------------------------------------
 if __name__ == "__main__":

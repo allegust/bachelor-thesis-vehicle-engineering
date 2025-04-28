@@ -1,5 +1,5 @@
 ###############################################################################
-# BikeEnergyOptimizedV2.py
+# BikeEnergyModel.py
 ###############################################################################
 import gpxpy
 import math
@@ -12,7 +12,7 @@ from PowerDeceleration import Power_Deceleration
 from PowerInputOff import Power_Input_Off
 from PowerInputOn import Power_Input_On
 from FreeRollingSlope import Free_Rolling_Slope
-
+33
 
 def MapData(map_file_path, FigStatus, RRcoef_input, Ay_max, temp):
     with open(map_file_path, 'r', encoding='utf-8') as f:
@@ -72,7 +72,7 @@ def MapData(map_file_path, FigStatus, RRcoef_input, Ay_max, temp):
 
     # Rolling resistance
     if RRcoef_input == 0:
-        c_r_val = 0.274/(temp + 46.8) + 0.004
+        c_r_val = 0.274/(temp + 46.8) + 0.0037
         StepRRcoef = [c_r_val]*len(StepDist)
     else:
         StepRRcoef = [RRcoef_input]*len(StepDist)
@@ -115,31 +115,6 @@ def MapData(map_file_path, FigStatus, RRcoef_input, Ay_max, temp):
         V_max_LatAcc,
         V_max_XRoads
     )
-
-""" OLD                                                                                 OLD
-    # ------------------------------------------------------------------
-    # NEW: Build V_max_XRoads as Nx2 (distance, slowdownStatus).
-    #   We'll just store the cumulative distance and a dummy "1" => free rolling.
-    # ------------------------------------------------------------------
-    V_max_XRoads = []
-    dist_accum = 0.0
-    for i, d in enumerate(StepDist):
-        dist_accum += d
-        # For example, give everything a speed-reduction "level 1" = free-rolling
-        # (You can put real data for each segment.)
-        V_max_XRoads.append([dist_accum, 1])  # distance so far, status=1
-
-    V_max_XRoads = np.array(V_max_XRoads, dtype=float)
-    return (
-        StepDist,
-        StepElevation,
-        StepAngle,
-        StepRRcoef,
-        ReduceSpeedDist,
-        V_max_LatAcc,
-        V_max_XRoads
-    )
-"""
 
 
 def simulate_energy(StepDist, StepAngle, StepRRcoef,

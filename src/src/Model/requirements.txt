@@ -1,0 +1,10 @@
+pyyaml
+pydantic
+numpy
+scipy
+gpxpy
+pyproj
+math
+pathlib
+typing
+matplotlib.pyplot
