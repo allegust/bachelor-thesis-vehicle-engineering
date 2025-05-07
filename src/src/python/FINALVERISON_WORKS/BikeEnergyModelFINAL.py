@@ -24,7 +24,7 @@ from PowerInputOn import Power_Input_On
 from FreeRollingSlope import Free_Rolling_Slope
 
 # ---------------------------------------------------------------------------
-STEP_SIZE = 0.5  # metres (1 cm) – global constant
+STEP_SIZE = 0.01  # metres (1 cm) – global constant
 INV_STEP = 1.0 / STEP_SIZE  # multiply instead of repeated division
 G = 9.81  # m/s² – gravity, used in helpers but useful to bind locally
 

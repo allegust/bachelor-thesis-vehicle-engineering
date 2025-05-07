@@ -299,6 +299,35 @@ def print_summary_stats(label, E, T, D, V):
     print("--------------------------------------------------\n")
 
 if __name__ == "__main__":
+    # 1) Run the full population simulation
+    (E_w, T_w, D_w, V_w,
+     E_m, T_m, D_m, V_m) = EnergyController()
+
+    # 2) Print every result as (Energy, Time, Distance, AvgSpeed)
+    print("\n=== Detailed results for Women ===")
+    for i, (e, t, d, v) in enumerate(zip(E_w, T_w, D_w, V_w), start=1):
+        print(f"{i:2d}: Energy={e:.2f} J, Time={t:.2f} s, Distance={d:.2f} m, AvgSpeed={v:.2f} m/s")
+    print("\n=== Detailed results for Men   ===")
+    for i, (e, t, d, v) in enumerate(zip(E_m, T_m, D_m, V_m), start=1):
+        print(f"{i:2d}: Energy={e:.2f} J, Time={t:.2f} s, Distance={d:.2f} m, AvgSpeed={v:.2f} m/s")
+
+    # 3) Print summary statistics
+    import numpy as np
+
+    def print_stats(label, E, T, D, V):
+        E, T, D, V = map(np.array, (E, T, D, V))
+        print(f"\n=== Summary for {label} ===")
+        print(f" Speed (m/s):    min={V.min():.2f}, median={np.median(V):.2f}, mean={V.mean():.2f}, max={V.max():.2f}")
+        print(f" Speed (km/h):   min={V.min()*3.6:.2f}, median={np.median(V)*3.6:.2f}, mean={V.mean()*3.6:.2f}, max={V.max()*3.6:.2f}")
+        print(f" Energy (J):     min={E.min():.2f}, median={np.median(E):.2f}, mean={E.mean():.2f}, max={E.max():.2f}")
+        print(f" Time (s):       min={T.min():.2f}, median={np.median(T):.2f}, mean={T.mean():.2f}, max={T.max():.2f}")
+        print(f" Distance (m):   min={D.min():.2f}, median={np.median(D):.2f}, mean={D.mean():.2f}, max={D.max():.2f}")
+        print("-" * 50)
+
+    print_stats("Women", E_w, T_w, D_w, V_w)
+    print_stats("Men",   E_m, T_m, D_m, V_m)
+
+"""if __name__ == "__main__":
     E_w, T_w, D_w, V_w, E_m, T_m, D_m, V_m = EnergyController()
 
     # Convert speeds to km/h
@@ -337,3 +366,4 @@ if __name__ == "__main__":
     for s in [1, 2]:
         some_avg_speeds_kmh = [19.2, 20.7, 21.5, 23.1, 24.0, 26.5, 27.2, 28.1, 30.4]
         plot_same_as_matlab(some_avg_speeds_kmh, s)
+        """

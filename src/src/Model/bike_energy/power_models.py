@@ -1,99 +1,135 @@
 import math
-from typing import Tuple
+from .config import gravity as G, ax_stop, ax_adapt, ax_latacc
 
 
-def power_input_on(
-    m: float,
-    rr_coef: float,
-    step_angle: float,
-    vx: float,
-    cwxA: float,
-    rho: float,
-    p_flat: float,
-    v_max: float,
-    g: float,
-) -> Tuple[float, float, float, float, float, float]:
+
+def power_input_on(m, StepRRcoef, StepAngle, vx, cwxA, rho, P, V_max):
     """
-    When cyclist is powering: return
-    (ax, P_in, P_roll, P_air, P_climb, P_acc).
+    This function calculates the longitudinal acceleration if the model is slower than desired,
+    matching the MATLAB version exactly.
     """
-    P_origin = p_flat
-    P_new = p_flat * 5.0 * step_angle
+
+    # Constants
+    #G = 9.81  # [m/s^2]
+
+
+    # Power adaptation to uphill cycling
+    # factor 1 at 0%
+    # factor 1.5 at 10% (5.7 degree = 0.0997 rad) (flat out)
+
+
+    P_origin = P                   # rider’s constant flat-road power
+    P_new    = P * 5.0 * StepAngle # uphill adaptation
+
     if P_new > 1.5 * P_origin:
         P = 1.5 * P_origin
     elif P_new < P_origin:
-        P = 1.5 * P_origin
+        P = 1.5 * P_origin    # bump up any “too small” P_new to 150% flat power
     else:
-        P = P_new
+        P = P_new             # only in the middle range do you actually use P_new
+    
+    # Steady state power used
+    P_roll_steady = m * G() * StepRRcoef * math.cos(StepAngle) * vx
+    P_air_steady = 0.5 * cwxA * rho * (vx ** 3)
+    P_climb_steady = m * G() * math.sin(StepAngle) * vx
 
-    P_roll  = m * g * rr_coef * math.cos(step_angle) * vx
-    P_air   = 0.5 * cwxA * rho * vx**3
-    P_climb = m * g * math.sin(step_angle) * vx
-    if P_climb >= P:
-        P_climb = P
-        vx = P / (m * g * math.sin(step_angle))
+    if P_climb_steady >= P:
+        P_climb_steady = P
+        vx = P / (m * G() * math.sin(StepAngle))
 
-    used = P_roll + P_air + P_climb
+    SteadyStatePowerUsed = P_roll_steady + P_air_steady + P_climb_steady
 
-    if vx > 0.8 * v_max and step_angle < 0:
-        P_acc = P/2 - used
+    # free power left for acceleration as function of individual max speed
+    if vx > 0.8 * V_max and StepAngle < 0:
+        P_acc = (P / 2.0) - SteadyStatePowerUsed
     else:
-        P_acc = P - used
+        P_acc = P - SteadyStatePowerUsed
 
-    ax = P_acc / (m * vx) if vx > 0 else P_acc / (m * 0.01)
-    ax = min(ax, 0.1) if step_angle >= 0.05 else min(ax, 0.3)
+    # calculate acceleration based on free power
+    if vx != 0:
+        ax = P_acc / (m * vx)
+    else:
+        ax = P_acc / (m * 0.01)
 
-    P_acc_in = m * ax * vx if vx > 0 else m * ax * 0.01
-    P_in = P_roll + P_air + P_climb + P_acc_in
-    if P_in < 0:
-        P_in = 0.0
+    # limit acceleration to a meaningful amount
+    if StepAngle >= 0.05 and ax > 0.1:
+        ax = 0.1
+    elif StepAngle < 0.05 and ax > 0.3:
+        ax = 0.3
 
-    return ax, P_in, P_roll, P_air, P_climb, P_acc_in
+    # calculate the effective acceleration power
+    if vx != 0:
+        P_acc_in = m * ax * vx
+    else:
+        P_acc_in = m * ax * 0.01
+
+    # calculate the effective cyclist input power
+    P_in = P_roll_steady + P_air_steady + P_climb_steady + P_acc_in
+
+    if P_in <= 0:
+        P_in = 0
+
+    return ax, P_in, P_roll_steady, P_air_steady, P_climb_steady, P_acc_in
 
 
-def power_input_off(
-    m: float, rr_coef: float, step_angle: float, vx: float, cwxA: float, rho: float, g: float
-) -> float:
+def power_input_off(m, StepRRcoef, StepAngle, vx, cwxA, rho):
     """
-    Free-rolling: returns deceleration ax s.t. rolling+air+climb = 0.
+    This function calculates the longitudinal negative acceleration if the model is faster than desired
     """
-    P_roll  = m * g * rr_coef * math.cos(step_angle) * vx
-    P_air   = 0.5 * cwxA * rho * vx**3
-    P_climb = m * g * math.sin(step_angle) * vx
-    if P_climb >= 0:
-        P_climb = 0.0
 
-    used = P_roll + P_air + P_climb
-    P_acc = -used
+    # Constants
+    #G = 9.81  # [m/s^2]
+    P = 0     # power off / free rolling
+
+    # Rolling resistance power
+    P_roll_steady = m * G() * StepRRcoef * math.cos(StepAngle) * vx
+    # Air resistance power
+    P_air_steady = 0.5 * cwxA * rho * (vx ** 3)
+    # Climbing power
+    P_climb_steady = m * G() * math.sin(StepAngle) * vx
+    if P_climb_steady >= P:
+        P_climb_steady = P
+
+    SteadyStatePowerUsed = P_roll_steady + P_air_steady + P_climb_steady
+
+    # free power left for acceleration
+    P_acc = P - SteadyStatePowerUsed
+
+    # calculate acceleration based on free power
     ax = P_acc / (m * vx)
+
     return ax
 
 
-def power_deceleration(
-    m: float,
-    rr_coef: float,
-    step_angle: float,
-    vx: float,
-    cwxA: float,
-    rho: float,
-    p_flat: float,
-    ax_brake: float,
-    g: float,
-) -> Tuple[float, float, float, float, float]:
+def power_deceleration(m, StepRRcoef, StepAngle, vx, cwxA, rho, P, ax):
     """
-    When braking: return (P_in, P_roll, P_air, P_climb, P_acc).
+    This function calculates the necessary power in case of deceleration
     """
-    P_climb = m * g * math.sin(step_angle) * vx
-    if P_climb >= p_flat:
-        P_climb = p_flat
+    
+    # Constants
+    #G = 9.81  # [m/s^2]
 
-    P_roll = m * g * rr_coef * math.cos(step_angle) * vx
-    P_air  = 0.5 * cwxA * rho * vx**3
-    used   = P_roll + P_air + P_climb
+    # Climbing power preliminary
+    P_climb_steady = m * G() * math.sin(StepAngle) * vx
+    if P_climb_steady >= P:
+        P_climb_steady = P
+        vx = P / (m * G() * math.sin(StepAngle))
 
-    P_acc = ax_brake * m * vx
-    P_in  = used + P_acc
-    if P_in < 0:
-        P_in = 0.0
+    # Rolling resistance power
+    P_roll_steady = m * G() * StepRRcoef * math.cos(StepAngle) * vx
+    # Air resistance power
+    P_air_steady = 0.5 * cwxA * rho * (vx ** 3)
 
-    return P_in, P_roll, P_air, P_climb, P_acc
+    SteadyStatePowerUsed = P_roll_steady + P_air_steady + P_climb_steady
+
+    # Calculate acceleration power (ax is negative -> power is negative!)
+    P_acc = ax * m * vx
+
+    # Subtract the deceleration from steady-state
+    P_in = SteadyStatePowerUsed + P_acc
+
+    # Limit to zero (no negative values!)
+    if P_in <= 0:
+        P_in = 0
+
+    return P_in, P_roll_steady, P_air_steady, P_climb_steady, P_acc

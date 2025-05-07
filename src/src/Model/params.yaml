@@ -1,43 +1,46 @@
+# params.yaml
+
 physical_constants:
-  gravity: 9.81           # m/s²
-  earth_radius: 6371000   # m
-  air_density_coefficients:
-    a: 1e-5         # kg/m³/K                               OK?
-    b: -0.0048
-    c: 1.2926
+  gravity:               9.81       # m/s²
+  earth_radius:          6371000    # m
+  air_density_coeffs:      # ρ(T) = a·T² + b·T + c
+    a: 1e-5                # kg/m³/K²
+    b: -0.0048             # kg/m³/K
+    c: 1.2926              # kg/m³
 
 simulation:
-  step_size: 0.01         # m
-  v_max: 10.5             # m/s
-  ay_max: 2.0             # m/s²
+  step_size: 0.01         # m per inner loop (1 cm)
+  v_max: 10.5             # m/s free‐roll target speed
+  ay_max: 2.0             # m/s² lateral‐acc limit
   ax:
-    adapt: -0.3           # m/s²
-    latacc: -1.5          # m/s²
-    stop: -2.0            # m/s²
+    adapt:    -0.3        # m/s² downhill braking limit
+    latacc:   -1.5        # m/s² lateral‐acc braking
+    stop:     -2.0        # m/s² stop‐sign braking
 
 power_model:
-  vo2max:
+  drivetrain_loss: 5.0    # subtract 5 W from rider’s raw power
+  vo2max_to_power:        # W per (l/min VO₂)
+    factor: 71.8
+  vo2max_percentiles:
     women: [24.225, 27.6, 29.1, 30.975, 32.125, 33.625, 35.5, 37.8, 41.625]
-    men:   [30.6, 33.2525, 35.9125, 37.8, 39.7, 41.55, 44.4875, 46.525, 49.125]
-  power_factor: 71.8      # W/(l/min VO₂)
-  drivetrain_loss: 5.0    # W
+    men:   [30.6,   33.2525, 35.9125, 37.8,   39.7,   41.55,  44.4875, 46.525, 49.125]
 
 weight_model:
-  percentiles: [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
+  percentiles: [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9]
   women:
-    mean_values:      [61.8, 64.7, 67.3, 68.9, 70.3, 71.3, 72.3, 73.1]
-    quantile25_values: [54.8, 57.3, 59.8, 61.1, 62.5, 63.5, 64.5, 65.2]
-    quantile75_values: [68.5, 71.8, 74.6, 76.8, 78.6, 79.8, 80.8, 81.6]
+    mean:      [61.8, 64.7, 67.3, 68.9, 70.3, 71.3, 72.3, 73.1]
+    q25:       [54.8, 57.3, 59.8, 61.1, 62.5, 63.5, 64.5, 65.2]
+    q75:       [68.5, 71.8, 74.6, 76.8, 78.6, 79.8, 80.8, 81.6]
   men:
-    mean_values:      [78.9, 81.6, 83.8, 85.6, 86.4, 86.6, 86.8, 86.8]
-    quantile25_values: [69.5, 71.9, 73.8, 75.0, 75.8, 76.0, 76.2, 76.1]
-    quantile75_values: [88.4, 91.6, 94.6, 96.8, 97.9, 98.3, 98.6, 98.7]
+    mean:      [78.9, 81.6, 83.8, 85.6, 86.4, 86.6, 86.8, 86.8]
+    q25:       [69.5, 71.9, 73.8, 75.0, 75.8, 76.0, 76.2, 76.1]
+    q75:       [88.4, 91.6, 94.6, 96.8, 97.9, 98.3, 98.6, 98.7]
 
 rolling_resistance:
-  percentiles: [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
+  percentiles: [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9]
   weibull:
-    k: 2.28
-    lambda: 0.00874
+    k:      2.28
+    λ:      0.00874
   temp_lookup: [
     3.29357798165138, 3.14912280701754, 3.01680672268908, 2.89516129032258,
     2.78294573643411, 2.67910447761194, 2.58273381294964, 2.49305555555556,
@@ -53,15 +56,11 @@ rolling_resistance:
     1.09118541033435, 1.07485029940120, 1.05899705014749, 1.04360465116279,
     1.02865329512894, 1.01412429378531, 1.0
   ]
-  base:
-    numerator: 0.274
-    temp_offset: 46.8
-    offset: 0.0037
 
-aerodynamic_drag:
+aero_drag:
   cwxA_values: [0.356, 0.402, 0.452, 0.493, 0.542, 0.588, 0.633, 0.695, 0.823]
 
 map:
   gpx_folder: data/raw
-  gpx_file: GraphHopper_Track_DD_Koenigsbruecker_up.gpx
-  max_slope: 0.2
+  gpx_file:   GraphHopper_Track_DD_Koenigsbruecker_up.gpx
+  max_slope:  0.2        # rad clip in map_data

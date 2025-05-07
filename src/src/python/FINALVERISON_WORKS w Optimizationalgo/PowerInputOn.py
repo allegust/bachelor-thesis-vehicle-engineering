@@ -1,7 +1,5 @@
 import math
 
-import math
-
 def Power_Input_On(m, StepRRcoef, StepAngle, vx, cwxA, rho, P, V_max):
     """
     This function calculates the longitudinal acceleration if the model is slower than desired,
