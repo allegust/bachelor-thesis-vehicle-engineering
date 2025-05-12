@@ -1,5 +1,3 @@
-# params.yaml
-
 physical_constants:
     gravity: 9.81
     earth_radius: 6371000
@@ -10,7 +8,7 @@ physical_constants:
     
 
 simulation:
-    step_size: 1 #0.01
+    step_size: 0.01 #0.01 is standard
     v_max: 10.5
     ay_max: 2.0
     ax:
@@ -68,6 +66,6 @@ aerodynamic_drag:
     cwxA_values: [0.356, 0.402, 0.452, 0.493, 0.542, 0.588, 0.633, 0.695, 0.823]
 
 map:
-    gpx_folder: data/raw
-    gpx_file: GraphHopper_Track_DD_Koenigsbruecker_up.gpx
+    gpx_folder: data/raw    #Change this to your GPX folder
+    gpx_file: GraphHopper_Track_DD_Koenigsbruecker_up.gpx   #Change this to your GPX file
     max_slope: 0.2

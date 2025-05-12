@@ -50,7 +50,8 @@ def map_data(
     a = (np.sin(dlat / 2.0)**2 + np.cos(lat1) * np.cos(lat2) * np.sin(dlon / 2.0)**2)
     dist_2d = EARTH_RADIUS * 2.0 * np.arctan2(np.sqrt(a), np.sqrt(1.0 - a))
 
-    # ——— Replace the constant-dz0 hack with true per-segment slopes ———
+    # --- This is the original intended code with dynamic slope calculation ---
+    """# ——— Replace the constant-dz0 hack with true per-segment slopes ———
     # 1) If you want StepElevation exactly like MATLAB:
     ele_rel     = ele - np.mean(ele)           # make elevation zero-mean
     step_ele    = ele_rel[1:]                  # MATLAB’s StepElevation
@@ -62,16 +63,15 @@ def map_data(
     mask        = step_dist > 0
     slope_angle[mask] = np.arctan(delta_ele[mask] / step_dist[mask])
     # 4) Clip to ±MAX_SLOPE (0.2 rad)
-    np.clip(slope_angle, -MAX_SLOPE, MAX_SLOPE, out=slope_angle)
+    np.clip(slope_angle, -MAX_SLOPE, MAX_SLOPE, out=slope_angle)"""
 
-    """step_ele = ele[1:]
+    # --- This is slope calculation with dz0 hack for performance ---
+    step_ele = ele[1:]
     delta_ele = step_ele - ele[:-1]
     dz0 = delta_ele[0]
-
     step_dist = dist_2d
     slope_angle = np.arctan2(dz0, step_dist)
-
-    np.clip(slope_angle, -MAX_SLOPE, MAX_SLOPE, out=slope_angle)"""
+    np.clip(slope_angle, -MAX_SLOPE, MAX_SLOPE, out=slope_angle)
 
     if rr_coef_input == 0:
         c_r = 0.274 / (temp_c + 46.8) + 0.0037

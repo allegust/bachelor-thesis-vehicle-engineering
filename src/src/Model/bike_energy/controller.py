@@ -62,7 +62,7 @@ def EnergyController() -> Dict[str, Any]:
     gpx_path = Path(GPX_FOLDER) / GPX_FILE
 
     results: Dict[str, Any] = {}
-    for gender, deciles, vo2_list in [
+    """for gender, deciles, vo2_list in [
         ("women", deciles_w, VO2_DECILES_WOMEN),
         ("men", deciles_m, VO2_DECILES_MEN),
     ]:
@@ -88,10 +88,48 @@ def EnergyController() -> Dict[str, Any]:
             m_total = M + 18.3
             alpha_vec, vx_vec = free_rolling_slope(m_total, step_rr[0], cwx, rho)
             idx = int(np.argmin(np.abs(vx_vec - V_MAX)))
-            alpha_vmax_ss = alpha_vec[idx]
-            p_flat = P - DRIVETRAIN_LOSS
+            alpha_vmax_ss = alpha_vec[idx]"""
+    for gender, deciles, vo2_list in [
+        ("women", deciles_w, VO2_DECILES_WOMEN),
+        ("men",   deciles_m, VO2_DECILES_MEN),
+    ]:
+        # specific power [W/kg]
+        pspec = [v * POWER_FACTOR / 1000.0 for v in vo2_list]
 
-            start_time = time.perf_counter()  # Start timing
+        E_list, T_list, D_list, V_list = [], [], [], []
+        # now include spec_power and mass in the same loop
+        for spec_power, M, cr, cwx in product(pspec, deciles, CRin, cwxA_In):
+            # compute absolute max power [W]
+            absolute_max_power = spec_power * M
+            # operate at 30% of that
+            P_flat = 0.3 * absolute_max_power
+
+            # compute air density at 20 m/s
+            rho = AIR_DENSITY_A * 20.0 ** 2 + AIR_DENSITY_B * 20.0 + AIR_DENSITY_C
+            (
+                step_dist,
+                step_ele,
+                slope_angle,
+                step_rr,
+                _reduce_speed_dist,
+                v_max_latacc,
+                v_max_xroads,
+            ) = map_data(str(gpx_path), cr, AY_MAX, 20.0)
+
+            if step_dist.size == 0:
+                continue
+
+            m_total = M + 18.3
+            alpha_vec, vx_vec = free_rolling_slope(m_total, step_rr[0], cwx, rho)
+            idx = int(np.argmin(np.abs(vx_vec - V_MAX)))
+            alpha_vmax_ss = alpha_vec[idx]
+
+
+
+
+            p_flat = P_flat - DRIVETRAIN_LOSS
+
+            #start_time = time.perf_counter()  # Start timing   
             E, T, D, Vavg, *_ = simulate_energy(
                 step_dist,
                 slope_angle,
@@ -107,8 +145,8 @@ def EnergyController() -> Dict[str, Any]:
                 rho,
                 alpha_vmax_ss,
             )
-            elapsed_time = time.perf_counter() - start_time  # End timing
-            print(f"simulate_energy execution time: {elapsed_time:.6f} seconds")  # Log the time
+            #elapsed_time = time.perf_counter() - start_time  # End timing
+            #print(f"simulate_energy execution time: {elapsed_time:.6f} seconds")  # Log the time
             E_list.append(E)
             T_list.append(T)
             D_list.append(D)

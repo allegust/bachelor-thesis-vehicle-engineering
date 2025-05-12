@@ -1,91 +1,97 @@
 # Bike Energy Model
 
-This project simulates the energy consumption of cyclists over a given road segment using GPX track data. The simulation accounts for slope, wind resistance, rolling resistance, acceleration/deceleration, and environmental conditions. It is adapted from a MATLAB model and fully rewritten and modularized in Python.
+This project simulates and analyzes cyclist energy consumption over road segments using GPX track data. It includes tools for both route-based energy simulation and synthetic profile optimization of cycle paths.
+
+## Features
+
+- **Energy Simulation**: Core library to compute cyclist energy, time, speed, and distance based on GPX input and physical models.
+- **Optimization Script**: `run_optimization_algo.py` generates synthetic profile variations (over/under highway) and compares energy/time results.
+- **Parameter Configuration**: Flexible parameters via `params.yaml` and `params_optpimization.py` for model constants and optimization tunables.
+- **CLI Tools**: Easy-to-use entry points for running simulations and saving JSON outputs.
+- **Plotting**: Automatic visualization of route profiles, histograms, and summary boxplots.
 
 ## Project Structure
 
 ```
-bike_energy/
-├── __init__.py                # Package initializer
-├── config.py                  # Loads and parses configuration from params.yaml
-├── controller.py              # Main entrypoint for running simulations
-├── free_rolling.py            # Computes slope-speed characteristics for free-rolling
-├── map_data.py                # Parses GPX files and computes slope, curvature, etc.
-├── power_models.py            # Power input/output and acceleration models
-├── simulator.py               # Core simulation loop
-├── speed_control.py           # Speed reduction due to crossroads and cornering
+├── bike_energy/                 # Core package
+│   ├── __init__.py              # Package metadata (version, author)
+│   ├── config.py                # Load and parse `params.yaml`
+│   ├── controller.py            # Main simulation controller
+│   ├── map_data.py              # GPX parsing and distance/slope computation
+│   ├── free_rolling.py          # Free-rolling slope analysis
+│   ├── power_models.py          # Power input/output/deceleration models
+│   ├── speed_control.py         # Speed reduction logic (crossroads, cornering)
+│   ├── simulator.py             # Core simulation loop
+├── data/raw/                    # Directory for GPX input files
+├── params.yaml                  # Simulation and model configuration
+├── params_optpimization.py      # Tunable parameters for optimization script
+├── pyproject.toml               # Packaging metadata
+├── requirements.txt             # Python dependencies
+├── run.py                       # CLI runner for energy simulation
+├── run_optimization_algo.py     # Script to run synthetic profile optimization
+└── README.md                    # Project overview and usage
 ```
-
-## Supporting Files
-
-```
-params.yaml                   # Configuration for physical constants, cyclist data, etc.
-pyproject.toml                # Python packaging metadata and dependencies
-run.py                        # CLI runner to execute the model and output results
-data/raw/                     # Folder to store GPX input files
-```
-
-## How It Works
-
-1. **Input**: A GPX file describing a cycling route.
-2. **Map Processing**: Elevation and curvature data are extracted and converted to slope, step distances, etc.
-3. **Simulation**: The cyclist model is simulated with power constraints, speed limits, and environmental factors.
-4. **Output**: Energy, time, speed, and distance results for different cyclist types (women/men).
 
 ## Installation
 
-```bash
-pip install .
-```
-
-Or for development:
+Ensure Python >= 3.8 and install dependencies:
 
 ```bash
+pip install .            # Install as package
+# or for development:
 pip install -e .
 ```
 
-Make sure your Python version is >= 3.8.
-
-## ▶Running the Model
-
-Use the CLI tool:
-
-```bash
-python run.py
-```
-
-To save the output as JSON:
-
-```bash
-python run.py -o output.json
-```
-
-## Output
-
-The simulation prints and plots:
-- Histograms and boxplots of energy, time, distance, and speed.
-- Summary statistics for both women and men cyclist populations.
-
 ## Configuration
 
-The simulation behavior is controlled via `params.yaml`. Here you can customize:
-- Physical constants (e.g., gravity, air density)
-- Cyclist VO2max data
-- Weight distributions
-- Rolling resistance and temperature effects
-- Aerodynamic drag values
-- Max slope clipping and GPX file path
+1. **Simulation Parameters**: Modify `params.yaml` to adjust physical constants, environment (temperature), VO₂max distributions, weight models, rolling resistance, aerodynamic drag values, and map GPX file settings.
+2. **Optimization Parameters**: `params_optpimization.py` contains geometry settings for synthetic profiles (e.g., `highway_width`, `max_slope`), rider/bike model tunables (`power`, `mass`, `c_r`, `cwxA`), and discretization details (`n_curve`, `n_flat`).
 
-## Example GPX File
+## Usage
 
-Place your GPX file in the `data/raw/` directory and reference its name in `params.yaml`:
-```yaml
-map:
-  gpx_folder: data/raw
-  gpx_file: YourTrackFile.gpx
+### 1. Energy Simulation
+
+Run the core simulation on a GPX route:
+
+```bash
+python run.py             # prints summary to stdout
+python run.py -o out.json # saves results to `out.json`
 ```
 
-## 👥 Authors
+Outputs:
+- Console summary of min, median, mean, and max for speed, energy, time, and distance for women and men.
+- Plots (histograms and boxplots) showing distributions.
 
-Alexander Gustafsson & Eddie Tunas Ericson  
-Vehicle Engineering Bachelor Thesis at KTH
+### 2. Synthetic Profile Optimization
+
+Generate and compare synthetic over/under highway profiles:
+
+```bash
+python run_optimization_algo.py
+```
+
+This script:
+- Reads tunables from `params_optpimization.py` and core constants from `bike_energy/config.py`.
+- Generates two synthetic profiles (over and under the highway) based on geometry and slope parameters.
+- Simulates one-way and round-trip energy, time, distance, and average speed for both profiles.
+- Prints results and plots the height profiles.
+
+## Output Interpretation
+
+- **Energy (J)**: Total joules expended.
+- **Time (s)**: Total seconds of traversal.
+- **Distance (m)**: Route length in meters.
+- **Avg Speed (km/h)**: Average velocity in km/h.
+
+Comparisons between over and under profiles help assess design trade-offs (e.g., steeper climb vs. longer path).
+
+## Contributing
+
+Contributions are welcome! Please fork the repository, create a feature branch, and submit a pull request.
+
+## Authors
+
+- Alexander Gustafsson
+- Eddie Tunas Ericson
+
+Bachelor Thesis, Vehicle Engineering, KTH 2025

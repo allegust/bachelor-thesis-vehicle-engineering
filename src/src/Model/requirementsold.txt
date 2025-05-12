@@ -1,0 +1,7 @@
+pyyaml
+pydantic
+numpy
+scipy
+gpxpy
+pyproj
+matplotlib

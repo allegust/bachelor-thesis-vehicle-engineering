@@ -27,7 +27,6 @@ def parse_args():
     )
     return p.parse_args()
 
-
 def summarize(label, values):
     values = np.array(values)
     print(f"{label:<15} min={values.min():.2f}, median={np.median(values):.2f}, mean={values.mean():.2f}, max={values.max():.2f}")

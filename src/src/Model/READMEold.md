@@ -1,17 +1,3 @@
-Metadata-Version: 2.4
-Name: bike_energy
-Version: 1.0.0
-Summary: Simulate cyclist energy consumption on road segments
-Author: Alexander Gustafsson & Eddie Tunas Ericson
-Requires-Python: >=3.8
-Description-Content-Type: text/markdown
-Requires-Dist: numpy
-Requires-Dist: scipy
-Requires-Dist: pyyaml
-Requires-Dist: gpxpy
-Requires-Dist: pyproj
-Requires-Dist: matplotlib
-
 # Bike Energy Model
 
 This model simulates the energy consumption of cyclists over a given road segment using GPX track data. The simulation accounts for slope, wind resistance, rolling resistance, acceleration/deceleration, and environmental conditions. It is adapted from a MATLAB model, built by Malte Rothhämel, and fully rewritten and modularized in Python.
@@ -19,21 +5,22 @@ This model simulates the energy consumption of cyclists over a given road segmen
 ## Project Structure
 
 ```
-├── bike_energy/
-│   ├── __init__.py         # Package initializer
-│   ├── config.py           # Loads and parses configuration from params.yaml
-│   ├── controller.py       # Main entrypoint for running simulations
-│   ├── map_data.py         # Parses GPX files and computes slope, curvature, etc.
-│   ├── free_rolling.py     # Computes slope-speed characteristics for free-rolling
-│   ├── power_models.py     # Power input/output and acceleration models
-│   ├── speed_control.py    # Speed reduction due to crossroads and cornering
-│   └── simulator.py        # Core simulation loop
-├── data/raw/               # Folder to store GPX input files
-├── params.yaml             # Configuration for physical constants, cyclist data, etc.
-├── pyproject.toml          # Python packaging metadata and dependencies
-├── run.py                  # CLI runner to execute the model and output results
-├── requirements.txt
-└── README.md
+├── bike_energy/                  # Core energy model package
+│   ├── __init__.py               # Package initializer
+│   ├── config.py                 # Loads and parses configuration from params.yaml
+│   ├── controller.py             # Main entrypoint for GPX-based simulations
+│   ├── map_data.py               # Parses GPX files and computes slope, curvature, etc.
+│   ├── free_rolling.py           # Computes free-rolling slope-speed characteristics
+│   ├── power_models.py           # Power input/output and acceleration models
+│   ├── speed_control.py          # Speed reduction due to crossroads and cornering
+│   └── simulator.py              # Core simulation loop
+├── data/raw/                     # Folder to store GPX input files
+├── params.yaml                   # Configuration for physical constants, cyclist data, etc.
+├── pyproject.toml                # Python packaging metadata and dependencies
+├── requirements.txt              # Python dependencies (e.g., numpy, scipy, gpxpy)
+├── run.py                        # CLI runner for GPX-based simulations
+├── optimeringsproblem v2-1.py    # Example optimization problem: over/under highway profiles
+└── README.md                     # Project overview and usage
 ```
 
 ## How It Works

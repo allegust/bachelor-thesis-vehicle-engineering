@@ -126,7 +126,7 @@ def simulate_energy(
                         )
 
             new_vx_sq = vx * vx + 2.0 * ax_temp * STEP_SIZE
-            vx = math.sqrt(max(new_vx_sq, 0.0))
+            vx = math.sqrt(max(new_vx_sq, 0.0)) if new_vx_sq > 0.0 else 0.0
 
             if vx > 0.0:
                 dt = STEP_SIZE / vx

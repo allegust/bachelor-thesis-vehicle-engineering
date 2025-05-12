@@ -1,3 +1,4 @@
+# === VS Code ===
 .vscode/*
 !.vscode/settings.json
 !.vscode/tasks.json
@@ -10,3 +11,69 @@
 
 # Built Visual Studio Code Extensions
 *.vsix
+
+# === Python byte‐code ===
+__pycache__/
+*.py[cod]
+*$py.class
+
+# === Virtual environments ===
+env/
+venv/
+.venv/
+ENV/
+env.bak/
+venv.bak/
+
+# === Distribution / packaging ===
+build/
+dist/
+*.egg-info/
+.eggs/
+pip-wheel-metadata/
+*.egg
+MANIFEST
+
+# === Installer logs ===
+pip-log.txt
+pip-delete-this-directory.txt
+
+# === Unit test / coverage reports ===
+htmlcov/
+.coverage
+.coverage.*
+.cache
+.pytest_cache/
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+
+# === MyPy / static type caches ===
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# === Jupyter Notebook checkpoints ===
+.ipynb_checkpoints
+
+# === VS Code remote workspaces ===
+.vscode-server/
+
+# === OS files ===
+.DS_Store
+Thumbs.db
+
+# === IDEs / editors ===
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# === dotenv files ===
+.env
+.env.*.local
+
+# === Data folders (if you don’t want raw GPX in git) ===
+data/raw/

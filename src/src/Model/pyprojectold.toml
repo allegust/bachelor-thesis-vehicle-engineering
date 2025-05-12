@@ -10,12 +10,12 @@ authors = [{ name = "Alexander Gustafsson & Eddie Tunas Ericson" }]
 readme = "README.md"
 requires-python = ">=3.8"
 dependencies = [
-    "gpxpy",
-    "matplotlib",
     "numpy",
+    "scipy",
     "pyyaml",
+    "gpxpy",
     "pyproj",
-    "scipy"
+    "matplotlib"
 ]
 
 [tool.setuptools]

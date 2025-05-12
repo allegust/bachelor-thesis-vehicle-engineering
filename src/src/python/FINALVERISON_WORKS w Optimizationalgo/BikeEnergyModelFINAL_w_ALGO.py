@@ -135,7 +135,7 @@ def map_data(
     slope_angle[mask] = np.arctan(delta_ele[mask] / dist_2d[mask])
     np.clip(slope_angle, -0.2, 0.2, out=slope_angle)"""
 
-    """# keep the absolute elevation at the “end” of each segment
+    # keep the absolute elevation at the “end” of each segment
     # keep the end‐point elevations (for downstream use)
     step_ele = ele[1:]
     # compute every actual Δe for debugging (you know this is full array)
@@ -147,9 +147,9 @@ def map_data(
     slope_angle = np.arctan2(dz0, step_dist)
     # clip as MapData.m does
     np.clip(slope_angle, -0.2, 0.2, out=slope_angle)
-    #print("first 10 slopes:", slope_angle[:10])"""
+    #print("first 10 slopes:", slope_angle[:10])
 
-    # ——— Replace the constant-dz0 hack with true per-segment slopes ———
+    """# ——— Replace the constant-dz0 hack with true per-segment slopes ———
     # 1) If you want StepElevation exactly like MATLAB:
     ele_rel     = ele - np.mean(ele)           # make elevation zero-mean
     step_ele    = ele_rel[1:]                  # MATLAB’s StepElevation
@@ -161,7 +161,7 @@ def map_data(
     mask        = step_dist > 0
     slope_angle[mask] = np.arctan(delta_ele[mask] / step_dist[mask])
     # 4) Clip to ±MAX_SLOPE (0.2 rad)
-    np.clip(slope_angle, -0.2, 0.2, out=slope_angle)
+    np.clip(slope_angle, -0.2, 0.2, out=slope_angle)"""
 
     """    print("first 10 dists:", step_dist[:10])
     print("first 10 slopes:", slope_angle[:10])
@@ -327,31 +327,9 @@ def simulate_energy(
                         ax_temp, p_in, p_roll, p_air, p_climb, p_acc = Power_Input_On(
                             m, rr_coef, ang, vx, cwxA, rho, p_flat, v_max
                         )
-                        did_power_on = True
-
-            """# —————— INSERT DEBUG PRINT HERE ——————
-            old_vx = vx
-            # compute new vx
-            new_vx_sq = old_vx*old_vx + 2.0 * ax_temp * STEP_SIZE
-            vx = math.sqrt(new_vx_sq) if new_vx_sq > 0.0 else 0.0
-
-            # Only print for the very first segment (i==0) and first 5 slices
-            if i == 0 and ll < 5:
-                print(
-                    f"slice i={i}, ll={ll}: "
-                    f"ang={ang:.4f}, ax={ax_temp:.4f}, "
-                    f"old_vx={old_vx:.4f} -> new_vx={vx:.4f}, "
-                    f"P_roll={p_roll:.1f}, P_air={p_air:.1f}, "
-                    f"P_climb={p_climb:.1f}, P_acc={p_acc:.1f}"
-                )
-            # ————————————————————————————————"""
-            if did_power_on:
-                power_on_count += 1
-            else:
-                power_off_count += 1
 
             # 4) kinematics: update vx
-            new_vx_sq = vx*vx + 2.0 * ax_temp * STEP_SIZE
+            new_vx_sq = vx * vx + 2.0 * ax_temp * STEP_SIZE
             vx = math.sqrt(new_vx_sq) if new_vx_sq > 0.0 else 0.0
 
             # 5) integrate energy & time

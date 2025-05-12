@@ -1,7 +1,6 @@
-pyyaml
-pydantic
-numpy
-scipy
 gpxpy
-pyproj
 matplotlib
+numpy
+pyproj
+pyyaml
+scipy

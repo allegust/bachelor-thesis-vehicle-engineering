@@ -130,19 +130,14 @@ def map_data(
     # keep the absolute elevation at the “end” of each segment
     # keep the end‐point elevations (for downstream use)
     step_ele = ele[1:]
-
     # compute every actual Δe for debugging (you know this is full array)
     delta_ele = step_ele - ele[:-1]
-
     # now force Python to use the MATLAB‐observed “first Δe = 1.0” for all segments
     dz0 = delta_ele[0]   # = ele[1] – ele[0]
-
     # horizontal run of each segment
     step_dist = dist_2d
-
     # exactly mimic the MATLAB StepAngle you saw:
     slope_angle = np.arctan2(dz0, step_dist)
-
     # clip as MapData.m does
     np.clip(slope_angle, -0.2, 0.2, out=slope_angle)
     #print("first 10 slopes:", slope_angle[:10])
