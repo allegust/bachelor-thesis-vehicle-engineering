@@ -1,5 +1,5 @@
 import math
-from bike_energy.config import GRAVITY as G#, ax_stop, ax_adapt, ax_latacc
+from bike_energy.config import GRAVITY as g#, ax_stop, ax_adapt, ax_latacc
 
 
 
@@ -8,10 +8,6 @@ def power_input_on(m, StepRRcoef, StepAngle, vx, cwxA, rho, P, V_max):
     This function calculates the longitudinal acceleration if the model is slower than desired,
     matching the MATLAB version exactly.
     """
-
-    # Constants
-    #G = 9.81  # [m/s^2]
-
 
     # Power adaptation to uphill cycling
     # factor 1 at 0%
@@ -29,13 +25,22 @@ def power_input_on(m, StepRRcoef, StepAngle, vx, cwxA, rho, P, V_max):
         P = P_new             # only in the middle range do you actually use P_new
     
     # Steady state power used
-    P_roll_steady = m * G * StepRRcoef * math.cos(StepAngle) * vx
+    P_roll_steady = m * g * StepRRcoef * math.cos(StepAngle) * vx
     P_air_steady = 0.5 * cwxA * rho * (vx ** 3)
-    P_climb_steady = m * G * math.sin(StepAngle) * vx
+    P_climb_steady = m * g * math.sin(StepAngle) * vx
 
+    sin_a = math.sin(StepAngle)
     if P_climb_steady >= P:
         P_climb_steady = P
-        vx = P / (m * G * math.sin(StepAngle))
+        if abs(sin_a) > 1e-12:
+            vx = P / (m * g * sin_a)
+        else:
+            # flat terrain + zero power → leave vx unchanged (or set to 0)
+            vx = vx
+
+    """if P_climb_steady >= P:
+        P_climb_steady = P
+        vx = P / (m * g * math.sin(StepAngle))"""
 
     SteadyStatePowerUsed = P_roll_steady + P_air_steady + P_climb_steady
 
@@ -78,15 +83,14 @@ def power_input_off(m, StepRRcoef, StepAngle, vx, cwxA, rho):
     """
 
     # Constants
-    #G = 9.81  # [m/s^2]
     P = 0     # power off / free rolling
 
     # Rolling resistance power
-    P_roll_steady = m * G * StepRRcoef * math.cos(StepAngle) * vx
+    P_roll_steady = m * g * StepRRcoef * math.cos(StepAngle) * vx
     # Air resistance power
     P_air_steady = 0.5 * cwxA * rho * (vx ** 3)
     # Climbing power
-    P_climb_steady = m * G * math.sin(StepAngle) * vx
+    P_climb_steady = m * g * math.sin(StepAngle) * vx
     if P_climb_steady >= P:
         P_climb_steady = P
 
@@ -105,18 +109,15 @@ def power_deceleration(m, StepRRcoef, StepAngle, vx, cwxA, rho, P, ax):
     """
     This function calculates the necessary power in case of deceleration
     """
-    
-    # Constants
-    #G = 9.81  # [m/s^2]
 
     # Climbing power preliminary
-    P_climb_steady = m * G * math.sin(StepAngle) * vx
+    P_climb_steady = m * g * math.sin(StepAngle) * vx
     if P_climb_steady >= P:
         P_climb_steady = P
-        vx = P / (m * G * math.sin(StepAngle))
+        vx = P / (m * g * math.sin(StepAngle))
 
     # Rolling resistance power
-    P_roll_steady = m * G * StepRRcoef * math.cos(StepAngle) * vx
+    P_roll_steady = m * g * StepRRcoef * math.cos(StepAngle) * vx
     # Air resistance power
     P_air_steady = 0.5 * cwxA * rho * (vx ** 3)
 

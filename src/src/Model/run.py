@@ -11,6 +11,7 @@ Usage:
 
 import argparse
 import json
+import numpy as np
 from pathlib import Path
 
 from bike_energy.controller import EnergyController
@@ -27,6 +28,19 @@ def parse_args():
     return p.parse_args()
 
 
+def summarize(label, values):
+    values = np.array(values)
+    print(f"{label:<15} min={values.min():.2f}, median={np.median(values):.2f}, mean={values.mean():.2f}, max={values.max():.2f}")
+
+def print_summary(group_name, energy, time, distance, speed):
+    print(f"\n=== Summary for {group_name} ===")
+    summarize("Speed (m/s)", speed)
+    summarize("Speed (km/h)", np.array(speed) * 3.6)
+    summarize("Energy (J)", energy)
+    summarize("Time (s)", time)
+    summarize("Distance (m)", distance)
+    print("="*47)
+
 def main():
     args = parse_args()
 
@@ -37,7 +51,6 @@ def main():
         traceback.print_exc()
         raise
 
-    # Save to JSON if output path is given
     if args.output:
         try:
             with open(args.output, "w", encoding="utf-8") as f:
@@ -57,23 +70,13 @@ def main():
     Distance_men = results["distance_men"]
     AvgSpeed_men = results["avg_speed_men"]
 
-    # Print exactly like ControllerOPT.py
-    print('Women: [', end='')
-    for i in range(len(Energy_women)):
-        print(f"({Energy_women[i]:.10f}, {Time_women[i]:.10f}, {Distance_women[i]:.10f}, {AvgSpeed_women[i]:.10f})", end='')
-        if i < len(Energy_women) - 1:
-            print(', ', end='')
-    print(']')
-
-    print('Men: [', end='')
-    for i in range(len(Energy_men)):
-        print(f"({Energy_men[i]:.10f}, {Time_men[i]:.10f}, {Distance_men[i]:.10f}, {AvgSpeed_men[i]:.10f})", end='')
-        if i < len(Energy_men) - 1:
-            print(', ', end='')
-    print(']')
+    # Print clean summary
+    print_summary("Women", Energy_women, Time_women, Distance_women, AvgSpeed_women)
+    print_summary("Men", Energy_men, Time_men, Distance_men, AvgSpeed_men)
 
 if __name__ == "__main__":
     main()
+
 
 """
 def parse_args():

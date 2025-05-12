@@ -1,4 +1,4 @@
-from bike_energy.config import AX_STOP
+from bike_energy.config import AX_STOP , STEP_SIZE, AX_ADAPT, AX_LATACC
 
 def speed_reduction_caused_by_crossRoads(
     vx_current, ax_Dec_adapt, V_max_XRoads, Dist, Steps,
@@ -19,7 +19,7 @@ def speed_reduction_caused_by_crossRoads(
 
     # Compute total centimetre slices done so far
     cm_done = sum(len(seg) for seg in v_x_total) + len(v_x_list)
-    Dist_now = cm_done / 100.0  # convert to metres
+    Dist_now = cm_done * STEP_SIZE#  / 100.0  # convert to metres
 
     # Find the upcoming crossroad entry in the table
     next_idx = next((idx for idx, row in enumerate(V_max_XRoads) if Dist_now <= row[0]), None)
@@ -67,7 +67,7 @@ def speed_reduction_caused_by_high_lat_acc(vx, ax_Dec_LatAcc, V_max_LatAcc, Dist
     s_max = -0.5 * (vx ** 2) / ax_Dec_LatAcc
 
     # Distance to end of current 1cm step
-    Dist2EndOfStep = [(Dist - (ll + 1)) / 100.0]
+    Dist2EndOfStep = [(Dist - (ll + 1)) * STEP_SIZE] # / 100.0
 
     # Initial brake distance using the current step's lateral‑limit
     BrakeDist = [ -((vx - V_max_LatAcc[i]) ** 2) / (2.0 * ax_Dec_LatAcc) ]

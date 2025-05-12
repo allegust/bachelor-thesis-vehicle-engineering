@@ -20,7 +20,7 @@ def Speed_Reduction_Caused_By_CrossRoads(
 
     # Compute total centimetre slices done so far
     cm_done = sum(len(seg) for seg in v_x_total) + len(v_x_list)
-    Dist_now = cm_done / 100.0  # convert to metres
+    Dist_now = cm_done * 1 #/ 100.0  # convert to metres
 
     # Find the upcoming crossroad entry in the table
     next_idx = next((idx for idx, row in enumerate(V_max_XRoads) if Dist_now <= row[0]), None)

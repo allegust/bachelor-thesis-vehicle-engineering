@@ -25,7 +25,7 @@ from PowerInputOn import Power_Input_On
 from FreeRollingSlope import Free_Rolling_Slope
 
 # ---------------------------------------------------------------------------
-STEP_SIZE = 0.01  # metres (1 cm) – global constant
+STEP_SIZE = 1  # metres (1 cm) – global constant
 INV_STEP = 1.0 / STEP_SIZE  # multiply instead of repeated division
 G = 9.81  # m/s² – gravity, used in helpers but useful to bind locally
 
@@ -135,25 +135,33 @@ def map_data(
     slope_angle[mask] = np.arctan(delta_ele[mask] / dist_2d[mask])
     np.clip(slope_angle, -0.2, 0.2, out=slope_angle)"""
 
-    # keep the absolute elevation at the “end” of each segment
+    """# keep the absolute elevation at the “end” of each segment
     # keep the end‐point elevations (for downstream use)
     step_ele = ele[1:]
-
     # compute every actual Δe for debugging (you know this is full array)
     delta_ele = step_ele - ele[:-1]
-
     # now force Python to use the MATLAB‐observed “first Δe = 1.0” for all segments
     dz0 = delta_ele[0]   # = ele[1] – ele[0]
-
     # horizontal run of each segment
     step_dist = dist_2d
-
-    # exactly mimic the MATLAB StepAngle you saw:
     slope_angle = np.arctan2(dz0, step_dist)
-
     # clip as MapData.m does
     np.clip(slope_angle, -0.2, 0.2, out=slope_angle)
-    #print("first 10 slopes:", slope_angle[:10])
+    #print("first 10 slopes:", slope_angle[:10])"""
+
+    # ——— Replace the constant-dz0 hack with true per-segment slopes ———
+    # 1) If you want StepElevation exactly like MATLAB:
+    ele_rel     = ele - np.mean(ele)           # make elevation zero-mean
+    step_ele    = ele_rel[1:]                  # MATLAB’s StepElevation
+    # 2) Compute each Δe slice
+    delta_ele   = ele[1:] - ele[:-1]
+    step_dist   = dist_2d                      # horizontal run per slice
+    # 3) True per-segment slope
+    slope_angle = np.zeros_like(step_dist)
+    mask        = step_dist > 0
+    slope_angle[mask] = np.arctan(delta_ele[mask] / step_dist[mask])
+    # 4) Clip to ±MAX_SLOPE (0.2 rad)
+    np.clip(slope_angle, -0.2, 0.2, out=slope_angle)
 
     """    print("first 10 dists:", step_dist[:10])
     print("first 10 slopes:", slope_angle[:10])

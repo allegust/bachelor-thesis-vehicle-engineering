@@ -1,6 +1,6 @@
 import math
 import numpy as np
-from bike_energy.config import GRAVITY as g#, ax_stop, ax_adapt, ax_latacc
+from bike_energy.config import GRAVITY as g #, ax_stop, ax_adapt, ax_latacc
 
 def _alpha_vx(m: float, f_r: float, vx: float, cwxA: float, rho: float) -> float:
     """

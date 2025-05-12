@@ -30,7 +30,7 @@ def Speed_Reduction_Caused_By_High_Lat_Acc(vx, ax_Dec_LatAcc, V_max_LatAcc, Dist
     s_max = -0.5 * (vx ** 2) / ax_Dec_LatAcc
 
     # Distance to end of current 1cm step
-    Dist2EndOfStep = [(Dist - (ll + 1)) / 100.0]
+    Dist2EndOfStep = [(Dist - (ll + 1)) * 1] # [(Dist - (ll + 1)) / 100.0]
 
     # Initial brake distance using the current step's lateral‑limit
     BrakeDist = [ -((vx - V_max_LatAcc[i]) ** 2) / (2.0 * ax_Dec_LatAcc) ]
