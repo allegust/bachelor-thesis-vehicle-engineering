@@ -1,0 +1,13 @@
+Metadata-Version: 2.4
+Name: bike_energy
+Version: 0.1.0
+Summary: Simulate cyclist energy consumption on road segments
+Author-email: Your Name <your.email@example.com>
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+Requires-Dist: numpy
+Requires-Dist: scipy
+Requires-Dist: pyyaml
+Requires-Dist: gpxpy
+Requires-Dist: pyproj
+Requires-Dist: matplotlib

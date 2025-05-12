@@ -12,3 +12,14 @@
 ├── run.py
 ├── requirements.txt
 └── README.md
+
+| Old File                              | New Counterpart / Integration Target                          |
+| ------------------------------------- | ------------------------------------------------------------- |
+| `BikeEnergyModelFINAL_w_ALGO.py`      | `simulator.py`, `map_data.py`, `free_rolling.py`              |
+| `PowerInputOn.py`                     | `power_models.py` (`power_input_on`)                          |
+| `PowerInputOff.py`                    | `power_models.py` (`power_input_off`)                         |
+| `PowerDeceleration.py`                | `power_models.py` (`power_deceleration`)                      |
+| `FreeRollingSlope.py`                 | `free_rolling.py` (`free_rolling_slope`)                      |
+| `SpeedReductionCausedByCrossRoads.py` | `speed_control.py` (`speed_reduction_caused_by_crossroads`)   |
+| `SpeedReductionCausedByHighLatAcc.py` | `speed_control.py` (`speed_reduction_caused_by_high_lat_acc`) |
+| `ControllerOPT.py`                    | `controller.py` and `run.py`                                  |

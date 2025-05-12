@@ -1,5 +1,5 @@
 import math
-from .config import gravity as G, ax_stop, ax_adapt, ax_latacc
+from bike_energy.config import GRAVITY as G#, ax_stop, ax_adapt, ax_latacc
 
 
 
@@ -29,13 +29,13 @@ def power_input_on(m, StepRRcoef, StepAngle, vx, cwxA, rho, P, V_max):
         P = P_new             # only in the middle range do you actually use P_new
     
     # Steady state power used
-    P_roll_steady = m * G() * StepRRcoef * math.cos(StepAngle) * vx
+    P_roll_steady = m * G * StepRRcoef * math.cos(StepAngle) * vx
     P_air_steady = 0.5 * cwxA * rho * (vx ** 3)
-    P_climb_steady = m * G() * math.sin(StepAngle) * vx
+    P_climb_steady = m * G * math.sin(StepAngle) * vx
 
     if P_climb_steady >= P:
         P_climb_steady = P
-        vx = P / (m * G() * math.sin(StepAngle))
+        vx = P / (m * G * math.sin(StepAngle))
 
     SteadyStatePowerUsed = P_roll_steady + P_air_steady + P_climb_steady
 
@@ -82,11 +82,11 @@ def power_input_off(m, StepRRcoef, StepAngle, vx, cwxA, rho):
     P = 0     # power off / free rolling
 
     # Rolling resistance power
-    P_roll_steady = m * G() * StepRRcoef * math.cos(StepAngle) * vx
+    P_roll_steady = m * G * StepRRcoef * math.cos(StepAngle) * vx
     # Air resistance power
     P_air_steady = 0.5 * cwxA * rho * (vx ** 3)
     # Climbing power
-    P_climb_steady = m * G() * math.sin(StepAngle) * vx
+    P_climb_steady = m * G * math.sin(StepAngle) * vx
     if P_climb_steady >= P:
         P_climb_steady = P
 
@@ -110,13 +110,13 @@ def power_deceleration(m, StepRRcoef, StepAngle, vx, cwxA, rho, P, ax):
     #G = 9.81  # [m/s^2]
 
     # Climbing power preliminary
-    P_climb_steady = m * G() * math.sin(StepAngle) * vx
+    P_climb_steady = m * G * math.sin(StepAngle) * vx
     if P_climb_steady >= P:
         P_climb_steady = P
-        vx = P / (m * G() * math.sin(StepAngle))
+        vx = P / (m * G * math.sin(StepAngle))
 
     # Rolling resistance power
-    P_roll_steady = m * G() * StepRRcoef * math.cos(StepAngle) * vx
+    P_roll_steady = m * G * StepRRcoef * math.cos(StepAngle) * vx
     # Air resistance power
     P_air_steady = 0.5 * cwxA * rho * (vx ** 3)
 

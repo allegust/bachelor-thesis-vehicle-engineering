@@ -4,7 +4,4 @@ numpy
 scipy
 gpxpy
 pyproj
-math
-pathlib
-typing
-matplotlib.pyplot
+matplotlib

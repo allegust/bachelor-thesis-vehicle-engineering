@@ -21,15 +21,20 @@ _config = load_config()
 _PHYS = _config["physical_constants"]
 GRAVITY: float       = _PHYS["gravity"]
 EARTH_RADIUS: float  = _PHYS["earth_radius"]
-AIR_DENSITY_A: float = _PHYS["air_density_coefficients"]["a"]
+AIR_DENSITY_A: float = float(_PHYS["air_density_coefficients"]["a"])
+AIR_DENSITY_B: float = float(_PHYS["air_density_coefficients"]["b"])
+AIR_DENSITY_C: float = float(_PHYS["air_density_coefficients"]["c"])
+
+"""AIR_DENSITY_A: float = _PHYS["air_density_coefficients"]["a"]
 AIR_DENSITY_B: float = _PHYS["air_density_coefficients"]["b"]
-AIR_DENSITY_C: float = _PHYS["air_density_coefficients"]["c"]
+AIR_DENSITY_C: float = _PHYS["air_density_coefficients"]["c"]"""
 
 #──────────────────────────────────────────────────────────────────────────────
 # Simulation parameters (simulation)
 #──────────────────────────────────────────────────────────────────────────────
 _SIM = _config["simulation"]
-STEP_SIZE: float = _SIM["step_size"]
+STEP_SIZE: float = float(_SIM["step_size"])
+#STEP_SIZE: float = _SIM["step_size"]
 V_MAX: float     = _SIM["v_max"]
 AY_MAX: float    = _SIM["ay_max"]
 

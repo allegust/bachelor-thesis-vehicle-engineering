@@ -1,6 +1,6 @@
 import math
 import numpy as np
-
+from bike_energy.config import GRAVITY as g#, ax_stop, ax_adapt, ax_latacc
 
 def _alpha_vx(m: float, f_r: float, vx: float, cwxA: float, rho: float) -> float:
     """
@@ -8,7 +8,6 @@ def _alpha_vx(m: float, f_r: float, vx: float, cwxA: float, rho: float) -> float
     exactly balances downhill power for a given speed vx.
     Uses a three‐stage bracketing + refinement approach.
     """
-    g = 9.81  # m/s²
 
     # Stage 1: coarse grid of 10 α values from -0.001 to -0.901
     alpha_list = [-0.001 - 0.1 * i for i in range(10)]

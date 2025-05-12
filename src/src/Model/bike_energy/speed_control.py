@@ -1,4 +1,4 @@
-from .config import AX_STOP
+from bike_energy.config import AX_STOP
 
 def speed_reduction_caused_by_crossRoads(
     vx_current, ax_Dec_adapt, V_max_XRoads, Dist, Steps,
