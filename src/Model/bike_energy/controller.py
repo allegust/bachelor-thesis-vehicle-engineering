@@ -129,7 +129,7 @@ def EnergyController() -> Dict[str, Any]:
 
             p_flat = P_flat - DRIVETRAIN_LOSS
 
-            #start_time = time.perf_counter()  # Start timing   
+            start_time = time.perf_counter()  # Start timing   
             E, T, D, Vavg, *_ = simulate_energy(
                 step_dist,
                 slope_angle,
@@ -145,8 +145,8 @@ def EnergyController() -> Dict[str, Any]:
                 rho,
                 alpha_vmax_ss,
             )
-            #elapsed_time = time.perf_counter() - start_time  # End timing
-            #print(f"simulate_energy execution time: {elapsed_time:.6f} seconds")  # Log the time
+            elapsed_time = time.perf_counter() - start_time  # End timing
+            print(f"simulate_energy execution time: {elapsed_time:.6f} seconds")  # Log the time
             E_list.append(E)
             T_list.append(T)
             D_list.append(D)

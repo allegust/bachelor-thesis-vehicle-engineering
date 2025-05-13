@@ -12,6 +12,11 @@ def load_config(path: str = "params.yaml") -> Dict[str, Any]:
         _cfg = yaml.safe_load(Path(path).read_text())
     return _cfg
 
+"""
+BASE = Path(__file__).parent
+def load_config(fname="params.yaml"):
+    return yaml.safe_load((BASE / fname).read_text())"""
+
 # load once
 _config = load_config()
 
