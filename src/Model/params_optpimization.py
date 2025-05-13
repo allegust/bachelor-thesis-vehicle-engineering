@@ -3,6 +3,8 @@
 """
 Parameters for run_optimize.py
 """
+# ─── Environmental ───────────────────────────────────────────────────────
+ambient_temp = 20.0   # °C
 
 # ─── Geometry ────────────────────────────────────────────────────────────────
 highway_width = 55.0       # [m]
@@ -28,3 +30,5 @@ power = 150.0              # W
 mass  = 70.0               # kg
 c_r   = 0.007              # rolling-resistance coefficient
 cwxA  = 0.45               # aerodynamic drag area (Cw·A)
+
+v_init = 5.0            # initial speed [m/s] (not used in this version of run_optimization_algo.py, initial speed is haard-coded in simulator.py)

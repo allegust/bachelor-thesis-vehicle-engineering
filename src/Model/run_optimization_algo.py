@@ -12,6 +12,7 @@ import matplotlib.pyplot as plt
 
 # pull in all our tunables from params_opt.py
 from params_optpimization import (
+    ambient_temp as T,
     highway_width as w,
     max_slope    as s,
     start_height as h0,
@@ -34,7 +35,8 @@ from bike_energy.config import (
     AX_ADAPT,
     AX_LATACC,
     AIR_DENSITY_A,
-    RR_BASE_TEMP_OFFSET,
+    AIR_DENSITY_B, 
+    AIR_DENSITY_C,
     AY_MAX,
 )
 
@@ -102,15 +104,16 @@ def main():
     coords_under_gps = as_gps(list(zip(x_under, np.zeros_like(x_under), z_under)), lat0, lon0)
 
     sd_o, se_o, sa_o, rr_o, red_o, vla_o, vxr_o = map_data(
-        coords_over_gps, C_R, AY_MAX, RR_BASE_TEMP_OFFSET
+        coords_over_gps, C_R, AY_MAX, T
     )
     sd_u, se_u, sa_u, rr_u, red_u, vla_u, vxr_u = map_data(
-        coords_under_gps, C_R, AY_MAX, RR_BASE_TEMP_OFFSET
+        coords_under_gps, C_R, AY_MAX, T
     )
 
     # ─── Compute steady-state alpha at V_MAX ────────────────────────────────
+    rho = AIR_DENSITY_A*T**2 + AIR_DENSITY_B*T + AIR_DENSITY_C
     m_tot = M + 18.3
-    alpha_vec, vx_vec = free_rolling_slope(m_tot, rr_o[0], CWXA, AIR_DENSITY_A)
+    alpha_vec, vx_vec = free_rolling_slope(m_tot, rr_o[0], CWXA, rho)
     idx = int(np.argmin(np.abs(vx_vec - V_MAX)))
     alpha_ss = alpha_vec[idx]
 
@@ -119,11 +122,11 @@ def main():
 
     Eo_f, To_f, Do_f, Vo_f, *rest_o = simulate_energy(
         sd_o, sa_o, rr_o, vla_o, vxr_o,
-        m_tot, p_flat, V_MAX, AX_ADAPT, AX_LATACC, CWXA, AIR_DENSITY_A, alpha_ss
+        m_tot, p_flat, V_MAX, AX_ADAPT, AX_LATACC, CWXA, rho, alpha_ss
     )
     Eu_f, Tu_f, Du_f, Vu_f, *rest_u = simulate_energy(
         sd_u, sa_u, rr_u, vla_u, vxr_u,
-        m_tot, p_flat, V_MAX, AX_ADAPT, AX_LATACC, CWXA, AIR_DENSITY_A, alpha_ss
+        m_tot, p_flat, V_MAX, AX_ADAPT, AX_LATACC, CWXA, rho, alpha_ss
     )
 
     # ─── Print one-way results ─────────────────────────────────────────────
@@ -147,22 +150,22 @@ def main():
     coords_under_back= [(2*x_under[-1] - x, 0, z) for (x, _, z) in zip(x_under, x_under, z_under[::-1])]
 
     coords_over_gps_b  = as_gps(coords_over_back,  lat0, lon0)
-    coords_under_gps_b = as_gps(coords_under_back, lon0, lon0)
+    coords_under_gps_b = as_gps(coords_under_back, lat0, lon0)
 
     sd_ob, se_ob, sa_ob, rr_ob, red_ob, vla_ob, vxr_ob = map_data(
-        coords_over_gps_b, C_R, AY_MAX, RR_BASE_TEMP_OFFSET
+        coords_over_gps_b, C_R, AY_MAX, T
     )
     sd_ub, se_ub, sa_ub, rr_ub, red_ub, vla_ub, vxr_ub = map_data(
-        coords_under_gps_b, C_R, AY_MAX, RR_BASE_TEMP_OFFSET
+        coords_under_gps_b, C_R, AY_MAX, T
     )
 
     Eo_b, To_b, Do_b, Vo_b, *_ = simulate_energy(
         sd_ob, sa_ob, rr_ob, vla_ob, vxr_ob,
-        m_tot, p_flat, V_MAX, AX_ADAPT, AX_LATACC, CWXA, AIR_DENSITY_A, alpha_ss
+        m_tot, p_flat, V_MAX, AX_ADAPT, AX_LATACC, CWXA, rho, alpha_ss
     )
     Eu_b, Tu_b, Du_b, Vu_b, *_ = simulate_energy(
         sd_ub, sa_ub, rr_ub, vla_ub, vxr_ub,
-        m_tot, p_flat, V_MAX, AX_ADAPT, AX_LATACC, CWXA, AIR_DENSITY_A, alpha_ss
+        m_tot, p_flat, V_MAX, AX_ADAPT, AX_LATACC, CWXA, rho, alpha_ss
     )
 
     # ─── Sum for roundtrip and print ────────────────────────────────────────

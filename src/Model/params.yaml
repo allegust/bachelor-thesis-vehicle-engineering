@@ -8,7 +8,7 @@ physical_constants:
     
 
 simulation:
-    step_size: 0.05 #0.01 is standard
+    step_size: 0.01 #0.01 is standard
     v_max: 10.5
     ay_max: 2.0
     ax:
