@@ -6,13 +6,12 @@ from bike_energy.config import GRAVITY as g#, ax_stop, ax_adapt, ax_latacc
 def power_input_on(m, StepRRcoef, StepAngle, vx, cwxA, rho, P, V_max):
     """
     This function calculates the longitudinal acceleration if the model is slower than desired,
-    matching the MATLAB version exactly.
+    matching the MATLAB version.
     """
 
     # Power adaptation to uphill cycling
     # factor 1 at 0%
     # factor 1.5 at 10% (5.7 degree = 0.0997 rad) (flat out)
-
 
     P_origin = P                   # rider’s constant flat-road power
     P_new    = P * 5.0 * StepAngle # uphill adaptation

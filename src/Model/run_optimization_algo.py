@@ -10,7 +10,7 @@ import math
 import numpy as np
 import matplotlib.pyplot as plt
 
-# pull in all our tunables from params_opt.py
+# Pull in all our tunable parameters from params_optpimization.py
 from params_optpimization import (
     ambient_temp as T,
     highway_width as w,
@@ -28,7 +28,7 @@ from params_optpimization import (
     n_flat,
 )
 
-# bring in all the shared constants your sim needs
+# Bring in all the shared constants your sim needs
 from bike_energy.config import (
     DRIVETRAIN_LOSS,
     V_MAX,
@@ -55,6 +55,7 @@ def as_gps(coords_xyz, lat0, lon0):
         )
         for x, y, z in coords_xyz
     ]
+
 
 def main():
     # ─── Unpack GPS anchor ───────────────────────────────────────────────────

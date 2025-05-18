@@ -19,7 +19,7 @@ def speed_reduction_caused_by_crossRoads(
 
     # Compute total centimetre slices done so far
     cm_done = sum(len(seg) for seg in v_x_total) + len(v_x_list)
-    Dist_now = cm_done * STEP_SIZE#  / 100.0  # convert to metres
+    Dist_now = cm_done * STEP_SIZE          #  / 100.0  # convert to metres
 
     # Find the upcoming crossroad entry in the table
     next_idx = next((idx for idx, row in enumerate(V_max_XRoads) if Dist_now <= row[0]), None)
@@ -107,30 +107,3 @@ def speed_reduction_caused_by_high_lat_acc(vx, ax_Dec_LatAcc, V_max_LatAcc, Dist
         ReduceSpeedFlag = 0
 
     return ReduceSpeedFlag
-
-
-# Alternative version of the Speed_Reduction_Caused_By_High_Lat_Acc function
-# that uses a simpler approach to determine if braking is needed.
-# This version does not consider the look-ahead distance and only checks if
-# the current speed exceeds the maximum lateral acceleration limit for the
-# current segment. It returns 1 if braking is needed, otherwise returns 0.
-# This version is less complex and may be easier to understand, but it may
-# not be as accurate in determining the need for braking in all scenarios.
-"""def speed_reduction_caused_by_high_lat_acc(vx, ax_Dec_LatAcc, V_max_LatAcc, Dist, Steps, StepDist, ll, i):
-    
-    #Determine if we must brake for a cornering lateral-acceleration limit.
-    #Only considers the remaining distance in this 1 cm slice.
-    
-    # braking look-ahead distance (m) – positive
-    s_max = -0.5 * vx * vx / ax_Dec_LatAcc
-
-    # remaining distance in this segment (m): (Dist = total 1 cm slices, ll = current slice idx)
-    STEP_SIZE = 0.01
-    remaining = (Dist - ll) * STEP_SIZE
-
-    # if we still have more room than we need to brake, no corner braking
-    if remaining >= s_max:
-        return 0
-
-    # otherwise, if our current speed exceeds this segment’s corner limit, we must brake
-    return 1 if vx > V_max_LatAcc[i] else 0"""

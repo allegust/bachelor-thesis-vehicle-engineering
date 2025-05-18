@@ -9,7 +9,7 @@ def _alpha_vx(m: float, f_r: float, vx: float, cwxA: float, rho: float) -> float
     Uses a three‐stage bracketing + refinement approach.
     """
 
-    # Stage 1: coarse grid of 10 α values from -0.001 to -0.901
+    # Coarse grid of 10 α values from -0.001 to -0.901
     alpha_list = [-0.001 - 0.1 * i for i in range(10)]
     def total_power(alpha: float) -> float:
         return (
