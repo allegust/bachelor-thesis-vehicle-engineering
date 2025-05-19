@@ -12,7 +12,7 @@
 # Built Visual Studio Code Extensions
 *.vsix
 
-# === Python byte‐code ===
+# === Python byte-code and caches ===
 __pycache__/
 *.py[cod]
 *$py.class
@@ -28,10 +28,11 @@ venv.bak/
 # === Distribution / packaging ===
 build/
 dist/
+*.egg
 *.egg-info/
 .eggs/
+bike_energy.egg-info/
 pip-wheel-metadata/
-*.egg
 MANIFEST
 
 # === Installer logs ===
@@ -49,18 +50,18 @@ coverage.xml
 *.cover
 *.py,cover
 
-# === MyPy / static type caches ===
+# === MyPy / static type checkers ===
 .mypy_cache/
 .dmypy.json
 dmypy.json
 
 # === Jupyter Notebook checkpoints ===
-.ipynb_checkpoints
+.ipynb_checkpoints/
 
-# === VS Code remote workspaces ===
+# === Remote VS Code sessions ===
 .vscode-server/
 
-# === OS files ===
+# === OS-specific files ===
 .DS_Store
 Thumbs.db
 
@@ -71,9 +72,6 @@ Thumbs.db
 *.njsproj
 *.sln
 
-# === dotenv files ===
+# === dotenv / secrets ===
 .env
 .env.*.local
-
-# === Data folders (if you don’t want raw GPX in git) ===
-data/raw/

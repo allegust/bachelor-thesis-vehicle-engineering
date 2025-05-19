@@ -1,6 +1,0 @@
-numpy
-scipy
-pyyaml
-gpxpy
-pyproj
-matplotlib
